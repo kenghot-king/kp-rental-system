@@ -1,0 +1,44 @@
+# Backup
+backup_addons/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Odoo
+*.pyc
+filestore/
+sessions/
+
+# Environment
+.env
+*.log
+
+# Docker
+docker-compose.override.yml
+
+# Agent
+.agent/
+
+# Claude Code
+.claude/
+
+# Enterprise (proprietary)
+enterprise/
+.gitmodules

@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_DB=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  odoo-ce:
+    image: odoo:19.0
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    volumes:
+      - ./addons:/mnt/extra-addons/test
+    command: >
+      -- --addons-path=/mnt/extra-addons/test
+         --db_host=db --db_user=odoo --db_password=odoo
+         -d test_ce --init=base
+         --dev=reload
+
+  # odoo-guard:
+  #   image: odoo:19.0
+  #   depends_on:
+  #     - db
+  #   ports:
+  #     - "8071:8069"
+  #   volumes:
+  #     - ./addons_guard:/mnt/extra-addons/test
+  #   command: >
+  #     -- --addons-path=/mnt/extra-addons/test
+  #        --db_host=db --db_user=odoo --db_password=odoo
+  #        -d test_guard --init=base
+  #        --dev=reload
+
+  odoo-ee:
+    image: odoo:19.0
+    depends_on:
+      - db
+    ports:
+      - "8070:8069"
+    volumes:
+      - ./addons:/mnt/extra-addons/test
+      - ./enterprise:/mnt/extra-addons/enterprise:ro
+    command: >
+      -- --addons-path=/mnt/extra-addons/enterprise,/mnt/extra-addons/test
+         --db_host=db --db_user=odoo --db_password=odoo
+         -d test_ee --init=web_enterprise
+         --dev=reload
+
+volumes:
+  pgdata:

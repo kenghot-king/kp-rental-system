@@ -1,0 +1,19 @@
+from odoo.http import route
+
+from odoo.addons.sale.controllers.combo_configurator import (
+    SaleComboConfiguratorController,
+)
+from odoo.addons.ggg_rental.controllers.utils import _convert_rental_dates
+
+
+class GGGRentalComboConfiguratorController(SaleComboConfiguratorController):
+
+    @route()
+    def sale_combo_configurator_get_data(self, *args, **kwargs):
+        _convert_rental_dates(kwargs)
+        return super().sale_combo_configurator_get_data(*args, **kwargs)
+
+    @route()
+    def sale_combo_configurator_get_price(self, *args, **kwargs):
+        _convert_rental_dates(kwargs)
+        return super().sale_combo_configurator_get_price(*args, **kwargs)
