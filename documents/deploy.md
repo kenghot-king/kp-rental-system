@@ -64,9 +64,29 @@ docker compose -f docker-compose.prod.yml ps
 2. Odoo will show the database creation page
 3. Create database named **production**
 4. Set master password, admin email, and admin password
-5. Install the **ggg_rental** module from Apps
+5. Go to **Settings > Companies** > edit company > set **Country** to **Thailand** > Save
+6. Install the **ggg_rental** module from Apps
 
-## 6. Set Up Backups
+## 6. Post-Install Configuration
+
+After installing `ggg_rental`, configure the following manually:
+
+### Taxes (Invoicing > Configuration > Taxes)
+
+Create two taxes:
+
+| Name | Type | Amount | Price Include | Tax Group | Account |
+|------|------|--------|--------------|-----------|---------|
+| Output 7% include | Sale | 7% | Tax Included | VAT 7% | 213200 Output VAT |
+| Input 7% include | Purchase | 7% | Tax Included | VAT 7% | 114200 Input VAT |
+
+### Rental Settings (Rental > Configuration > Settings)
+
+- Set **Rental Location** (auto-created on first use)
+- Configure **Default Delay Costs** if needed
+- **Auto Refund Deposit** is enabled by default
+
+## 7. Set Up Backups
 
 ```bash
 sudo crontab -e

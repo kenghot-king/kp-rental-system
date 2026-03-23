@@ -9,30 +9,9 @@
     </record>
 
     <!-- ============================================================ -->
-    <!-- Taxes: VAT 7% Tax-Included (Sale)                            -->
-    <!-- Note: tax_group_id and repartition accounts must be set      -->
-    <!-- manually after installing Thai chart of accounts.            -->
+    <!-- Taxes: Created manually after Thai chart of accounts setup   -->
+    <!-- See documents/deploy.md for post-install configuration       -->
     <!-- ============================================================ -->
-    <record id="tax_output_vat_included" model="account.tax">
-        <field name="name">Output 7% include</field>
-        <field name="type_tax_use">sale</field>
-        <field name="amount_type">percent</field>
-        <field name="amount">7.0</field>
-        <field name="price_include_override">tax_included</field>
-        <field name="country_id" ref="base.th"/>
-        <field name="description">&lt;div&gt;Output VAT 7% (include)&lt;/div&gt;</field>
-    </record>
-
-    <!-- Taxes: VAT 7% Tax-Included (Purchase) -->
-    <record id="tax_input_vat_included" model="account.tax">
-        <field name="name">Input 7% include</field>
-        <field name="type_tax_use">purchase</field>
-        <field name="amount_type">percent</field>
-        <field name="amount">7.0</field>
-        <field name="price_include_override">tax_included</field>
-        <field name="country_id" ref="base.th"/>
-        <field name="description">&lt;div&gt;Input VAT 7% include&lt;/div&gt;</field>
-    </record>
 
     <!-- ============================================================ -->
     <!-- Journals: Payment Methods                                     -->
