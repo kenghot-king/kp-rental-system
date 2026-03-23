@@ -1,0 +1,89 @@
+<odoo noupdate="1">
+
+    <!-- ============================================================ -->
+    <!-- Company: Rental Settings                                      -->
+    <!-- ============================================================ -->
+    <record id="base.main_company" model="res.company">
+        <field name="min_extra_hour">2</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Taxes: VAT 7% Tax-Included (Sale)                            -->
+    <!-- ============================================================ -->
+    <record id="tax_output_vat_included" model="account.tax">
+        <field name="name">Output 7% include</field>
+        <field name="type_tax_use">sale</field>
+        <field name="amount_type">percent</field>
+        <field name="amount">7.0</field>
+        <field name="price_include_override">tax_included</field>
+        <field name="tax_group_id" ref="account.1_tax_group_vat_7"/>
+        <field name="country_id" ref="base.th"/>
+        <field name="description">&lt;div&gt;Output VAT 7% (include)&lt;/div&gt;</field>
+        <field name="invoice_repartition_line_ids" eval="[
+            Command.clear(),
+            Command.create({'repartition_type': 'base', 'factor_percent': 100.0}),
+            Command.create({'repartition_type': 'tax', 'factor_percent': 100.0, 'account_id': ref('account.1_l10n_th_account_213200')}),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[
+            Command.clear(),
+            Command.create({'repartition_type': 'base', 'factor_percent': 100.0}),
+            Command.create({'repartition_type': 'tax', 'factor_percent': 100.0, 'account_id': ref('account.1_l10n_th_account_213200')}),
+        ]"/>
+    </record>
+
+    <!-- Taxes: VAT 7% Tax-Included (Purchase) -->
+    <record id="tax_input_vat_included" model="account.tax">
+        <field name="name">Input 7% include</field>
+        <field name="type_tax_use">purchase</field>
+        <field name="amount_type">percent</field>
+        <field name="amount">7.0</field>
+        <field name="price_include_override">tax_included</field>
+        <field name="tax_group_id" ref="account.1_tax_group_vat_7"/>
+        <field name="country_id" ref="base.th"/>
+        <field name="description">&lt;div&gt;Input VAT 7% include&lt;/div&gt;</field>
+        <field name="invoice_repartition_line_ids" eval="[
+            Command.clear(),
+            Command.create({'repartition_type': 'base', 'factor_percent': 100.0}),
+            Command.create({'repartition_type': 'tax', 'factor_percent': 100.0, 'account_id': ref('account.1_l10n_th_account_114200')}),
+        ]"/>
+        <field name="refund_repartition_line_ids" eval="[
+            Command.clear(),
+            Command.create({'repartition_type': 'base', 'factor_percent': 100.0}),
+            Command.create({'repartition_type': 'tax', 'factor_percent': 100.0, 'account_id': ref('account.1_l10n_th_account_114200')}),
+        ]"/>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Journals: Payment Methods                                     -->
+    <!-- ============================================================ -->
+    <record id="journal_cash" model="account.journal">
+        <field name="name">Cash</field>
+        <field name="type">cash</field>
+        <field name="code">CASH</field>
+    </record>
+
+    <record id="journal_visa" model="account.journal">
+        <field name="name">VISA</field>
+        <field name="type">bank</field>
+        <field name="code">VISA</field>
+    </record>
+
+    <record id="journal_master" model="account.journal">
+        <field name="name">MASTER</field>
+        <field name="type">bank</field>
+        <field name="code">MC</field>
+    </record>
+
+    <record id="journal_promptpay" model="account.journal">
+        <field name="name">QR PromptPay</field>
+        <field name="type">bank</field>
+        <field name="code">QR</field>
+    </record>
+
+    <record id="journal_transfer" model="account.journal">
+        <field name="name">Transfer</field>
+        <field name="type">bank</field>
+        <field name="code">TRF</field>
+    </record>
+
+</odoo>

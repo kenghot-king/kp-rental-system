@@ -37,6 +37,7 @@ services:
   #        --dev=reload
 
   odoo-ee:
+    profiles: ["ee"]
     image: odoo:19.0
     depends_on:
       - db
