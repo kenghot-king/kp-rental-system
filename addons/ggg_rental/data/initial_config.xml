@@ -10,6 +10,8 @@
 
     <!-- ============================================================ -->
     <!-- Taxes: VAT 7% Tax-Included (Sale)                            -->
+    <!-- Note: tax_group_id and repartition accounts must be set      -->
+    <!-- manually after installing Thai chart of accounts.            -->
     <!-- ============================================================ -->
     <record id="tax_output_vat_included" model="account.tax">
         <field name="name">Output 7% include</field>
@@ -17,19 +19,8 @@
         <field name="amount_type">percent</field>
         <field name="amount">7.0</field>
         <field name="price_include_override">tax_included</field>
-        <field name="tax_group_id" ref="account.1_tax_group_vat_7"/>
         <field name="country_id" ref="base.th"/>
         <field name="description">&lt;div&gt;Output VAT 7% (include)&lt;/div&gt;</field>
-        <field name="invoice_repartition_line_ids" eval="[
-            Command.clear(),
-            Command.create({'repartition_type': 'base', 'factor_percent': 100.0}),
-            Command.create({'repartition_type': 'tax', 'factor_percent': 100.0, 'account_id': ref('account.1_l10n_th_account_213200')}),
-        ]"/>
-        <field name="refund_repartition_line_ids" eval="[
-            Command.clear(),
-            Command.create({'repartition_type': 'base', 'factor_percent': 100.0}),
-            Command.create({'repartition_type': 'tax', 'factor_percent': 100.0, 'account_id': ref('account.1_l10n_th_account_213200')}),
-        ]"/>
     </record>
 
     <!-- Taxes: VAT 7% Tax-Included (Purchase) -->
@@ -39,19 +30,8 @@
         <field name="amount_type">percent</field>
         <field name="amount">7.0</field>
         <field name="price_include_override">tax_included</field>
-        <field name="tax_group_id" ref="account.1_tax_group_vat_7"/>
         <field name="country_id" ref="base.th"/>
         <field name="description">&lt;div&gt;Input VAT 7% include&lt;/div&gt;</field>
-        <field name="invoice_repartition_line_ids" eval="[
-            Command.clear(),
-            Command.create({'repartition_type': 'base', 'factor_percent': 100.0}),
-            Command.create({'repartition_type': 'tax', 'factor_percent': 100.0, 'account_id': ref('account.1_l10n_th_account_114200')}),
-        ]"/>
-        <field name="refund_repartition_line_ids" eval="[
-            Command.clear(),
-            Command.create({'repartition_type': 'base', 'factor_percent': 100.0}),
-            Command.create({'repartition_type': 'tax', 'factor_percent': 100.0, 'account_id': ref('account.1_l10n_th_account_114200')}),
-        ]"/>
     </record>
 
     <!-- ============================================================ -->
