@@ -457,6 +457,14 @@ class SaleOrderLine(models.Model):
             credit_note = self.env['account.move'].sudo().create(credit_note_vals)
             credit_note.action_post()
 
+            # Auto-register refund payment if enabled
+            if self.company_id.deposit_auto_refund:
+                payment_register = self.env['account.payment.register'].with_context(
+                    active_model='account.move',
+                    active_ids=credit_note.ids,
+                ).create({})
+                payment_register.action_create_payments()
+
     # === RENTAL NOTES === #
 
     RENTAL_NOTES_MARKER = '\n---'

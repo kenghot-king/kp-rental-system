@@ -18,6 +18,13 @@ class ResCompany(models.Model):
         domain="[('type', '=', 'service')]",
     )
 
+    # Deposit
+    deposit_auto_refund = fields.Boolean(
+        "Auto Refund Deposit",
+        default=True,
+        help="Automatically register a refund payment when a deposit credit note is created on return.",
+    )
+
     # Rental Inventory
     rental_loc_id = fields.Many2one(
         "stock.location", string="Rental Location",

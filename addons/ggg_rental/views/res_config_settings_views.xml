@@ -48,6 +48,11 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Deposit">
+                        <setting name="deposit_auto_refund_setting" string="Auto Refund Deposit" help="Automatically register a refund payment when deposit credit note is created on return">
+                            <field name="deposit_auto_refund"/>
+                        </setting>
+                    </block>
                 </app>
             </xpath>
         </field>

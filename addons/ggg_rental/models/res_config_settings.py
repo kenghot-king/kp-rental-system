@@ -31,6 +31,11 @@ class ResConfigSettings(models.TransientModel):
         readonly=False,
         domain=[('type', '=', 'service')],
     )
+    deposit_auto_refund = fields.Boolean(
+        string="Auto Refund Deposit",
+        related='company_id.deposit_auto_refund',
+        readonly=False,
+    )
     rental_loc_id = fields.Many2one(
         string="Rental Stock Location",
         help="Internal location for products currently in rental.",
