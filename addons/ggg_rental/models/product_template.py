@@ -35,6 +35,12 @@ class ProductTemplate(models.Model):
         help="First rental pricing of the product",
     )
 
+    is_rental_deposit = fields.Boolean(
+        string="Is Rental Deposit",
+        default=False,
+        help="Mark this product as a rental security deposit.",
+    )
+
     # Delays pricing
     extra_hourly = fields.Float(
         "Hourly Fine", help="Fine per hour late", company_dependent=True,

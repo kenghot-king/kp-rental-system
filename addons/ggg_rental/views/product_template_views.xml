@@ -49,6 +49,10 @@
                     <field name="rent_ok"/>
                     <label for="rent_ok"/>
                 </span>
+                <span class="d-inline-flex">
+                    <field name="is_rental_deposit"/>
+                    <label for="is_rental_deposit"/>
+                </span>
             </span>
             <xpath expr="//notebook/page[@name='sales']" position="attributes">
                 <attribute name="invisible" add="not rent_ok" separator=" and "/>

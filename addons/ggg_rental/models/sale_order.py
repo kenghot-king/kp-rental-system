@@ -3,7 +3,7 @@ from math import ceil
 
 from odoo import _, api, fields, models
 from odoo.fields import Domain
-from odoo.tools import float_compare
+from odoo.tools import float_compare, float_is_zero
 
 
 RENTAL_STATUS = [
@@ -417,6 +417,52 @@ class SaleOrder(models.Model):
                     outstanding_qty, lot_ids=lot_ids,
                 )
         return super()._action_cancel()
+
+    #=== INVOICING ===#
+
+    def _get_invoiceable_lines(self, final=False):
+        """Filter invoiceable lines based on deposit split context."""
+        lines = super()._get_invoiceable_lines(final=final)
+        if self.env.context.get('_rental_exclude_deposit'):
+            return lines.filtered(
+                lambda l: l.display_type or not l.product_id.is_rental_deposit
+            )
+        if self.env.context.get('_rental_deposit_only'):
+            return lines.filtered(
+                lambda l: l.display_type or l.product_id.is_rental_deposit
+            )
+        return lines
+
+    def _create_invoices(self, grouped=False, final=False, date=None):
+        """Split deposit and non-deposit lines into separate invoices."""
+        if self.env.context.get('_rental_deposit_splitting'):
+            return super()._create_invoices(grouped=grouped, final=final, date=date)
+
+        # Check if any SO has mixed deposit + non-deposit invoiceable lines
+        precision = self.env['decimal.precision'].precision_get('Product Unit')
+        needs_split = False
+        for order in self:
+            lines = order.order_line.filtered(
+                lambda l: not l.display_type
+                and not float_is_zero(l.qty_to_invoice, precision_digits=precision)
+            )
+            has_deposit = any(l.product_id.is_rental_deposit for l in lines)
+            has_non_deposit = any(not l.product_id.is_rental_deposit for l in lines)
+            if has_deposit and has_non_deposit:
+                needs_split = True
+                break
+
+        if not needs_split:
+            return super()._create_invoices(grouped=grouped, final=final, date=date)
+
+        ctx = {'_rental_deposit_splitting': True}
+        rental_invoices = self.with_context(
+            **ctx, _rental_exclude_deposit=True,
+        )._create_invoices(grouped=grouped, final=final, date=date)
+        deposit_invoices = self.with_context(
+            **ctx, _rental_deposit_only=True,
+        )._create_invoices(grouped=grouped, final=final, date=date)
+        return rental_invoices | deposit_invoices
 
     #=== BUSINESS METHODS ===#
 

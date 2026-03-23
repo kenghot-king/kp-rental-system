@@ -383,6 +383,80 @@ class SaleOrderLine(models.Model):
             )
         return super()._get_pricelist_price()
 
+    # === DEPOSIT HELPERS === #
+
+    def _is_rental_deposit_line(self):
+        """Check if this SO line is a rental deposit line."""
+        self.ensure_one()
+        return self.product_id.is_rental_deposit
+
+    def _create_deposit_credit_note(self, qty_returned, qty_delivered):
+        """Create a proportional credit note for the deposit when rental items are returned.
+
+        :param float qty_returned: quantity being returned in this event
+        :param float qty_delivered: total delivered quantity on the rental line
+        """
+        self.ensure_one()
+        deposit_lines = self.order_id.order_line.filtered(
+            lambda l: l.product_id.is_rental_deposit
+        )
+        if not deposit_lines:
+            return
+
+        for deposit_line in deposit_lines:
+            # Find posted deposit invoice lines
+            deposit_invoice_lines = deposit_line.invoice_lines.filtered(
+                lambda l: l.move_id.state == 'posted'
+                and l.move_id.move_type == 'out_invoice'
+            )
+            if not deposit_invoice_lines:
+                continue
+
+            deposit_invoice = deposit_invoice_lines[0].move_id
+            deposit_amount = sum(deposit_invoice_lines.mapped('price_total'))
+
+            # Calculate proportional credit amount
+            ratio = qty_returned / qty_delivered if qty_delivered else 0
+            credit_amount = deposit_amount * ratio
+
+            if credit_amount <= 0:
+                continue
+
+            # Check total already credited to avoid over-refunding
+            existing_credits = deposit_invoice.reversal_move_ids.filtered(
+                lambda m: m.state != 'cancel'
+            )
+            already_credited = sum(
+                existing_credits.mapped('amount_untaxed_signed')
+            )
+            # amount_untaxed_signed is negative for credit notes
+            remaining = deposit_amount + already_credited
+            if remaining <= 0:
+                continue
+            credit_amount = min(credit_amount, remaining)
+
+            # Create credit note
+            credit_note_vals = {
+                'move_type': 'out_refund',
+                'partner_id': self.order_id.partner_id.id,
+                'reversed_entry_id': deposit_invoice.id,
+                'invoice_date': fields.Date.today(),
+                'ref': _("Deposit refund: %(order)s", order=self.order_id.name),
+                'invoice_line_ids': [Command.create({
+                    'product_id': deposit_line.product_id.id,
+                    'quantity': 1,
+                    'price_unit': credit_amount,
+                    'name': _("Deposit refund - %(product)s (%(returned)s/%(total)s returned)",
+                              product=deposit_line.product_id.name,
+                              returned=int(qty_returned),
+                              total=int(qty_delivered)),
+                    'tax_ids': [Command.set(deposit_line.tax_ids.ids)],
+                    'sale_line_ids': [Command.link(deposit_line.id)],
+                })],
+            }
+            credit_note = self.env['account.move'].sudo().create(credit_note_vals)
+            credit_note.action_post()
+
     # === RENTAL NOTES === #
 
     RENTAL_NOTES_MARKER = '\n---'
@@ -464,6 +538,8 @@ class SaleOrderLine(models.Model):
                 else:
                     lot_ids = None
                 sol._create_rental_return(qty, lot_ids=lot_ids)
+                # Auto-create deposit credit note
+                sol._create_deposit_credit_note(qty, sol.qty_delivered)
 
         # Update line descriptions with pickup/return notes
         rental_lines = self.filtered(lambda sol: sol.is_rental and sol.state == 'sale')

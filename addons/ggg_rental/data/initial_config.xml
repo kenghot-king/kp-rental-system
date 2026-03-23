@@ -1,4 +1,5 @@
-<odoo noupdate="1">
+<odoo>
+<data noupdate="1">
 
     <!-- ============================================================ -->
     <!-- Company: Rental Settings                                      -->
@@ -86,4 +87,5 @@
         <field name="code">TRF</field>
     </record>
 
+</data>
 </odoo>
