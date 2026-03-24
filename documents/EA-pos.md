@@ -184,7 +184,6 @@ sequenceDiagram
 | Daily workflow | Switch between Mendix & POS | Single screen |
 | Receipt printing | POS (existing) | PDF report |
 | Payment methods | POS (all existing methods) | Odoo (configured journals) |
-| Offline capability | POS works offline | Odoo needs network |
 | Data reconciliation | Mendix ↔ POS ↔ SAP | Odoo → SAP |
 
 ---
@@ -203,7 +202,7 @@ sequenceDiagram
  Staff familiar with POS                     Mendix rental module: build from scratch
                                              Mendix stock tracking: build from scratch
  Mendix low-code = faster initial build      No API between Mendix & POS
-                                               (staff must manually enter rental doc #)
+ (but requirement is not clear)              (staff must manually enter rental doc #)
  Mendix Cloud = no infra to manage           Data split across systems
  POS handles offline scenarios               Mendix license cost (per user/month)
                                              Rental doc # ↔ POS transaction
@@ -219,9 +218,9 @@ sequenceDiagram
  ✅ PROS                                    ❌ CONS
  ─────────────────────────────────────────   ─────────────────────────────────────────
  Single system for all operations            Must build new SAP integration
- Rental module already built (ported EE)     Must build new SAP integration
- Stock + S/N tracking mature & proven        Staff must learn new system (Odoo)
- Auto deposit refund on return               On-prem infra to maintain
+ Rental module already built (ported EE)     Staff must learn new system (Odoo)
+ Stock + S/N tracking mature & proven        On-prem infra to maintain
+ Auto deposit refund on return               
  Unified data (rental + financial)
  Built-in reporting across all data
  Open source, no license fees
@@ -267,7 +266,7 @@ graph LR
 | Staff adoption | Medium (2 UIs) | Medium (new UI) |
 | Ongoing cost | **High** (Mendix license) | Low (open source) |
 | Vendor lock-in | **High** (Mendix platform) | Low (open source) |
-| Scalability | Mendix Cloud (good) | On-prem (adequate for 5 users) |
+| Scalability | Mendix Cloud (good) | On-prem (maintain) |
 
 ---
 
@@ -279,7 +278,7 @@ graph LR
 | Rental module | Mendix dev: ~xx days | Already built |
 | Stock module | Mendix dev: ~xx days | Built-in |
 | Mendix ↔ POS integration | ~xx days | N/A |
-| SAP integration | N/A (existing) | ~?? days |
+| SAP integration | ~?? days | ~?? days |
 | **Recurring** | | |
 | Mendix license | ~?? Baht/user/month | $0 (open source) |
 | Hosting | Mendix Cloud (included) | On-prem server (existing) |
@@ -323,4 +322,4 @@ graph TD
 | Most automation | **Option B** (auto deposit refund) |
 | Best data integrity | **Option B** (unified data) |
 
-**Summary:** Option A's perceived advantage of reusing the existing POS → SAP integration is diminished — rental transactions (deposits, refunds, late fees) require significant SAP modification regardless. Additionally, Mendix has no API to POS, forcing staff to manually key in rental document numbers. Option B (Odoo) wins on every criteria: faster to production (rental module already built), lower cost, simpler architecture, better automation, unified data, and both options require comparable SAP integration effort. For 5 users with non-critical uptime, Option B is the recommended approach.
+**Summary:** Option A's perceived advantage of reusing the existing POS → SAP integration is diminished — rental transactions (deposits, refunds, late fees) require significant SAP modification regardless. Additionally, Mendix has no API to POS, forcing staff to manually key in rental document numbers. Option B (Odoo) wins on every criteria: faster to production (rental module already built), lower cost, simpler architecture, better automation, unified data, and both options require comparable SAP integration effort. Option B is the recommended approach.
