@@ -371,8 +371,7 @@ graph TB
 graph TB
     subgraph "Docker Compose"
         subgraph "Application"
-            CE["odoo-ce<br/>Port: 8069<br/>Odoo 19 CE"]
-            EE["odoo-ee<br/>Port: 8070<br/>Odoo 19 EE<br/>(profile: ee)"]
+            CE["Odoo 19 CE<br/>Port: 8071"]
         end
 
         subgraph "Database"
@@ -380,17 +379,13 @@ graph TB
         end
 
         CE --> PG
-        EE -.-> PG
     end
 
     subgraph "Volumes"
         ADDONS["./addons<br/>Custom modules"]
-        ENT["./enterprise<br/>EE modules (ro)"]
     end
 
     ADDONS --> CE
-    ADDONS --> EE
-    ENT --> EE
 
     subgraph "Custom Modules"
         GR["ggg_rental<br/>Rental Management"]
