@@ -10,3 +10,5 @@ access_sale_temporal_recurrence_public,sale_temporal_recurrence.public,model_sal
 access_sale_temporal_recurrence_portal,sale_temporal_recurrence.portal,model_sale_temporal_recurrence,base.group_portal,1,0,0,0
 access_sale_temporal_recurrence_user,sale_temporal_recurrence.internal.user,model_sale_temporal_recurrence,base.group_user,1,0,0,0
 access_sale_temporal_recurrence_sale_manager,sale_temporal_recurrence.sale.manager,model_sale_temporal_recurrence,sales_team.group_sale_manager,1,1,1,1
+access_rental_damage_log_salesman,rental.damage.log.salesman,model_rental_damage_log,sales_team.group_sale_salesman,1,1,1,0
+access_rental_damage_log_manager,rental.damage.log.manager,model_rental_damage_log,sales_team.group_sale_manager,1,1,1,1

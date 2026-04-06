@@ -26,6 +26,8 @@ Manage user and manager notifications.
         'views/sale_order_line_views.xml',
         'views/sale_temporal_recurrence_views.xml',
         'views/res_config_settings_views.xml',
+        'views/rental_damage_log_views.xml',
+        'views/stock_lot_views.xml',
         'report/rental_order_report_templates.xml',
         'report/rental_report_views.xml',
         'wizard/rental_processing_views.xml',

@@ -48,6 +48,20 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Damage">
+                        <setting name="damage_product_setting" string="Damage Product" help="Service product used for damage fee charges on returns">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label string="Product" for="damage_product" class="col-lg-3 o_light_label"/>
+                                    <field
+                                        name="damage_product"
+                                        placeholder="Product to charge damage fees"
+                                        context="{'default_type': 'service'}"
+                                    />
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
                     <block title="Deposit">
                         <setting name="deposit_auto_refund_setting" string="Auto Refund Deposit" help="Automatically register a refund payment when deposit credit note is created on return">
                             <field name="deposit_auto_refund"/>

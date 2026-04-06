@@ -31,6 +31,14 @@ class ResConfigSettings(models.TransientModel):
         readonly=False,
         domain=[('type', '=', 'service')],
     )
+    damage_product = fields.Many2one(
+        string="Damage Product",
+        help="Service product used for damage fee charges on rental returns.",
+        comodel_name='product.product',
+        related='company_id.damage_product',
+        readonly=False,
+        domain=[('type', '=', 'service')],
+    )
     deposit_auto_refund = fields.Boolean(
         string="Auto Refund Deposit",
         related='company_id.deposit_auto_refund',

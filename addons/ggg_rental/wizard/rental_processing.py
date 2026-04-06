@@ -156,6 +156,15 @@ class RentalOrderWizardLine(models.TransientModel):
     qty_delivered = fields.Float("Picked-up")
     qty_returned = fields.Float("Returned")
 
+    # Damage assessment fields (return only)
+    condition = fields.Selection(
+        selection=[('good', 'Good'), ('damaged', 'Damaged')],
+        string="Condition",
+        default='good',
+    )
+    damage_fee = fields.Float(string="Damage Fee")
+    damage_reason = fields.Text(string="Damage Reason")
+
     # Serial number fields
     pickeable_lot_ids = fields.Many2many(
         'stock.lot', 'wizard_line_pickeable_lot_rel',
@@ -229,6 +238,10 @@ class RentalOrderWizardLine(models.TransientModel):
                 if wizard_line.rental_order_wizard_id.is_late:
                     order_line._generate_delay_line(wizard_line.qty_returned)
 
+                # Damage assessment
+                if wizard_line.condition == 'damaged':
+                    wizard_line._process_damage(order_line)
+
                 vals = {
                     'qty_returned': order_line.qty_returned + wizard_line.qty_returned,
                 }
@@ -259,6 +272,40 @@ class RentalOrderWizardLine(models.TransientModel):
                 order_line.qty_returned,
                 order_line.qty_returned + self.qty_returned,
             )
+
+    def _process_damage(self, order_line):
+        """Process damage assessment: create damage fee SO line and damage log records.
+
+        :param sale.order.line order_line: the rental order line
+        """
+        self.ensure_one()
+        is_serial = self.tracking == 'serial'
+
+        # Create damage fee SO line
+        if is_serial and self.returned_lot_ids:
+            # One damage fee line per serial, split fee equally
+            fee_per_lot = self.damage_fee / len(self.returned_lot_ids) if self.damage_fee else 0
+            for lot in self.returned_lot_ids:
+                order_line._generate_damage_line(fee_per_lot, self.damage_reason, lot=lot)
+                self.env['rental.damage.log'].create({
+                    'lot_id': lot.id,
+                    'order_id': order_line.order_id.id,
+                    'order_line_id': order_line.id,
+                    'product_id': order_line.product_id.id,
+                    'damage_fee': fee_per_lot,
+                    'reason': self.damage_reason,
+                })
+        else:
+            # Bulk product: single damage fee line, no lot
+            order_line._generate_damage_line(self.damage_fee, self.damage_reason)
+            self.env['rental.damage.log'].create({
+                'lot_id': False,
+                'order_id': order_line.order_id.id,
+                'order_line_id': order_line.id,
+                'product_id': order_line.product_id.id,
+                'damage_fee': self.damage_fee,
+                'reason': self.damage_reason,
+            })
 
     def _generate_log_message(self):
         msg = ""

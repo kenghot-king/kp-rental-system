@@ -347,6 +347,7 @@ class SaleOrderLine(models.Model):
             'product_uom_qty': 1,
             'qty_delivered': 1,
             'price_unit': delay_price,
+            'is_rental': False,
         }
 
     def _get_delay_line_description(self):
@@ -382,6 +383,81 @@ class SaleOrderLine(models.Model):
                 end_date=self.return_date,
             )
         return super()._get_pricelist_price()
+
+    # === DAMAGE FEE HELPERS === #
+
+    def _generate_damage_line(self, damage_fee, damage_reason, lot=None):
+        """Generate a sale order line representing the damage fee.
+
+        :param float damage_fee: damage fee amount entered by staff
+        :param str damage_reason: reason for damage
+        :param stock.lot lot: damaged serial (optional)
+        """
+        self.ensure_one()
+        if damage_fee <= 0.0:
+            return
+
+        self = self.with_company(self.company_id)
+        damage_product = self.company_id.damage_product
+        if not damage_product:
+            damage_product = self.env['product.product'].with_context(
+                active_test=False,
+            ).search(
+                [('default_code', '=', 'DAMAGE'), ('type', '=', 'service')],
+                limit=1,
+            )
+            if not damage_product:
+                damage_product = self.env['product.product'].create({
+                    "name": "Rental Damage Fee",
+                    "standard_price": 0.0,
+                    "type": 'service',
+                    "default_code": "DAMAGE",
+                    "purchase_ok": False,
+                })
+            self.company_id.damage_product = damage_product
+
+        if not damage_product.active:
+            return
+
+        damage_fee = self._convert_to_sol_currency(
+            damage_fee, self.product_id.currency_id,
+        )
+
+        order_line_vals = self._prepare_damage_line_vals(
+            damage_product, damage_fee, damage_reason, lot=lot,
+        )
+        self.order_id.write({
+            'order_line': [Command.create(order_line_vals)],
+        })
+
+    def _prepare_damage_line_vals(self, damage_product, damage_fee, damage_reason, lot=None):
+        """Prepare values of damage fee line.
+
+        :param product.product damage_product: Service product for damage fee
+        :param float damage_fee: Price of the damage line
+        :param str damage_reason: Reason for damage
+        :param stock.lot lot: Damaged serial number (optional)
+        :return: sale.order.line creation values
+        :rtype: dict
+        """
+        description = self._get_damage_line_description(damage_reason, lot=lot)
+        return {
+            'name': description,
+            'product_id': damage_product.id,
+            'product_uom_qty': 1,
+            'qty_delivered': 1,
+            'price_unit': damage_fee,
+            'is_rental': False,
+        }
+
+    def _get_damage_line_description(self, damage_reason, lot=None):
+        """Build the description for a damage fee SO line."""
+        parts = [self.product_id.name]
+        if lot:
+            parts.append(_("S/N: %(serial)s", serial=lot.name))
+        if damage_reason:
+            parts.append(_("Reason: %(reason)s", reason=damage_reason))
+        return "\n".join(parts)
 
     # === DEPOSIT HELPERS === #
 

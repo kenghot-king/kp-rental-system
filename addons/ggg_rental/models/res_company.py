@@ -18,6 +18,14 @@ class ResCompany(models.Model):
         domain="[('type', '=', 'service')]",
     )
 
+    # Damage
+    damage_product = fields.Many2one(
+        'product.product',
+        string="Damage Product",
+        help="Service product used for damage fee charges on rental returns.",
+        domain="[('type', '=', 'service')]",
+    )
+
     # Deposit
     deposit_auto_refund = fields.Boolean(
         "Auto Refund Deposit",
