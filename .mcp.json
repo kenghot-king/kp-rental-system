@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "odoo": {
+      "command": "python3",
+      "args": ["-m", "odoo_mcp.server"],
+      "cwd": "/Users/administrator/Developer/odoo_19/custom_addons/odoo_mcp/src",
+      "env": {
+        "ODOO_URL": "http://localhost:8069",
+        "ODOO_DB": "test_ce",
+        "ODOO_USER": "admin",
+        "ODOO_PASSWORD": "admin"
+      }
+    }
+  }
+}
