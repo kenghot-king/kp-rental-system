@@ -27,6 +27,12 @@ class ResCompany(models.Model):
     )
 
     # Deposit
+    rental_deposit_product_id = fields.Many2one(
+        'product.product',
+        string="Rental Deposit Product",
+        help="Product used for auto-created deposit lines on rental orders.",
+        domain="[('is_rental_deposit', '=', True)]",
+    )
     deposit_auto_refund = fields.Boolean(
         "Auto Refund Deposit",
         default=True,

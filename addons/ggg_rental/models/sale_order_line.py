@@ -39,6 +39,14 @@ class SaleOrderLine(models.Model):
         related='product_id.rent_ok', depends=['product_id'],
     )
 
+    # Auto-deposit link
+    deposit_parent_id = fields.Many2one(
+        'sale.order.line',
+        string="Deposit Parent Line",
+        ondelete='cascade',
+        copy=False,
+    )
+
     # Serial number tracking for rentals
     tracking = fields.Selection(related='product_id.tracking', depends=['product_id'])
     pickedup_lot_ids = fields.Many2many(

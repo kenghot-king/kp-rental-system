@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="rental_deposit_sync_wizard_form" model="ir.ui.view">
+        <field name="name">rental.deposit.sync.wizard.form</field>
+        <field name="model">rental.deposit.sync.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Deposit Data Changed">
+                <group>
+                    <p class="text-muted">
+                        The following deposit discrepancies were found. Please verify before continuing.
+                    </p>
+                    <field name="mismatch_info" widget="text" readonly="1" nolabel="1"/>
+                    <field name="order_id" invisible="1"/>
+                    <field name="original_action" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_update_and_continue" type="object"
+                        string="Update &amp; Continue" class="btn-primary"/>
+                    <button name="action_update_and_goback" type="object"
+                        string="Update &amp; Go Back" class="btn-secondary"/>
+                    <button name="action_continue_as_is" type="object"
+                        string="Continue As-Is" class="btn-secondary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

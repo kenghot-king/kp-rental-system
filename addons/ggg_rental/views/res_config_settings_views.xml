@@ -63,6 +63,17 @@
                         </setting>
                     </block>
                     <block title="Deposit">
+                        <setting name="rental_deposit_product_setting" string="Deposit Product" help="Product used for auto-created deposit lines on rental orders">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label string="Product" for="rental_deposit_product_id" class="col-lg-3 o_light_label"/>
+                                    <field
+                                        name="rental_deposit_product_id"
+                                        placeholder="Select a deposit product"
+                                    />
+                                </div>
+                            </div>
+                        </setting>
                         <setting name="deposit_auto_refund_setting" string="Auto Refund Deposit" help="Automatically register a refund payment when deposit credit note is created on return">
                             <field name="deposit_auto_refund"/>
                         </setting>

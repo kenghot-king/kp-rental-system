@@ -39,6 +39,14 @@ class ResConfigSettings(models.TransientModel):
         readonly=False,
         domain=[('type', '=', 'service')],
     )
+    rental_deposit_product_id = fields.Many2one(
+        string="Rental Deposit Product",
+        help="Product used for auto-created deposit lines on rental orders.",
+        comodel_name='product.product',
+        related='company_id.rental_deposit_product_id',
+        readonly=False,
+        domain="[('is_rental_deposit', '=', True)]",
+    )
     deposit_auto_refund = fields.Boolean(
         string="Auto Refund Deposit",
         related='company_id.deposit_auto_refund',

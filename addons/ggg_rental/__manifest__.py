@@ -32,6 +32,7 @@ Manage user and manager notifications.
         'report/rental_order_report_templates.xml',
         'report/rental_report_views.xml',
         'wizard/account_payment_register_views.xml',
+        'wizard/rental_deposit_sync_views.xml',
         'wizard/rental_processing_views.xml',
         'views/sale_renting_menus.xml',
     ],

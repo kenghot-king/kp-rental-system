@@ -2,7 +2,8 @@ from dateutil.relativedelta import relativedelta
 from math import ceil
 
 from odoo import _, api, fields, models
-from odoo.fields import Domain
+from odoo.exceptions import UserError
+from odoo.fields import Command, Domain
 from odoo.tools import float_compare, float_is_zero
 
 
@@ -463,6 +464,173 @@ class SaleOrder(models.Model):
             **ctx, _rental_deposit_only=True,
         )._create_invoices(grouped=grouped, final=final, date=date)
         return rental_invoices | deposit_invoices
+
+    #=== DEPOSIT SYNC ===#
+
+    def action_sync_deposits(self):
+        """Create, update, or remove deposit lines to match rental lines."""
+        self.ensure_one()
+        deposit_product = self.company_id.rental_deposit_product_id
+        if not deposit_product:
+            raise UserError(_(
+                "No rental deposit product configured. "
+                "Please set a Rental Deposit Product in Rental Settings."
+            ))
+
+        rental_lines = self.order_line.filtered(
+            lambda l: l.is_rental and l.product_id.rent_ok and not l.deposit_parent_id
+        )
+        deposit_lines = self.order_line.filtered(lambda l: l.deposit_parent_id)
+
+        # Build map: parent line id → deposit line
+        deposit_map = {dl.deposit_parent_id.id: dl for dl in deposit_lines}
+
+        # Remove orphaned deposit lines
+        rental_ids = set(rental_lines.ids)
+        orphaned = deposit_lines.filtered(lambda l: l.deposit_parent_id.id not in rental_ids)
+        if orphaned:
+            orphaned.unlink()
+
+        for line in rental_lines:
+            expected_price = line.product_id.list_price
+            expected_qty = line.product_uom_qty
+            deposit = deposit_map.get(line.id)
+
+            if deposit:
+                # Update drifted values
+                update_vals = {}
+                if deposit.product_uom_qty != expected_qty:
+                    update_vals['product_uom_qty'] = expected_qty
+                if deposit.price_unit != expected_price:
+                    update_vals['price_unit'] = expected_price
+                if deposit.tax_ids != line.tax_ids:
+                    update_vals['tax_ids'] = [Command.set(line.tax_ids.ids)]
+                if deposit.name != _("[Deposit] %(product)s", product=line.product_id.name):
+                    update_vals['name'] = _("[Deposit] %(product)s", product=line.product_id.name)
+                if update_vals:
+                    deposit.write(update_vals)
+            else:
+                # Create missing deposit line
+                self.env['sale.order.line'].create({
+                    'order_id': self.id,
+                    'product_id': deposit_product.id,
+                    'name': _("[Deposit] %(product)s", product=line.product_id.name),
+                    'price_unit': expected_price,
+                    'product_uom_qty': expected_qty,
+                    'tax_ids': [Command.set(line.tax_ids.ids)],
+                    'deposit_parent_id': line.id,
+                    'sequence': line.sequence + 1,
+                    'is_rental': False,
+                })
+
+    def _check_deposit_sync(self):
+        """Check if deposit lines are in sync with rental lines.
+
+        :return: list of mismatch descriptions, or False if in sync
+        """
+        self.ensure_one()
+        if not self.is_rental_order:
+            return False
+
+        deposit_product = self.company_id.rental_deposit_product_id
+        if not deposit_product:
+            return [_("No rental deposit product configured in Rental Settings.")]
+
+        rental_lines = self.order_line.filtered(
+            lambda l: l.is_rental and l.product_id.rent_ok and not l.deposit_parent_id
+        )
+        deposit_lines = self.order_line.filtered(lambda l: l.deposit_parent_id)
+        deposit_map = {dl.deposit_parent_id.id: dl for dl in deposit_lines}
+
+        mismatches = []
+
+        # Check orphaned deposits
+        rental_ids = set(rental_lines.ids)
+        for dl in deposit_lines:
+            if dl.deposit_parent_id.id not in rental_ids:
+                mismatches.append(_("Orphaned deposit line: %(name)s", name=dl.name))
+
+        # Check each rental line
+        for line in rental_lines:
+            deposit = deposit_map.get(line.id)
+            if not deposit:
+                mismatches.append(_(
+                    "%(product)s: no deposit line",
+                    product=line.product_id.name,
+                ))
+            else:
+                if deposit.product_uom_qty != line.product_uom_qty:
+                    mismatches.append(_(
+                        "%(product)s: deposit qty %(dep_qty)s ≠ rental qty %(rent_qty)s",
+                        product=line.product_id.name,
+                        dep_qty=int(deposit.product_uom_qty),
+                        rent_qty=int(line.product_uom_qty),
+                    ))
+                if deposit.price_unit != line.product_id.list_price:
+                    mismatches.append(_(
+                        "%(product)s: deposit price %(dep_price)s ≠ product price %(prod_price)s",
+                        product=line.product_id.name,
+                        dep_price=deposit.price_unit,
+                        prod_price=line.product_id.list_price,
+                    ))
+
+        return mismatches or False
+
+    def _open_deposit_sync_wizard(self, original_action, mismatches):
+        """Open the deposit sync wizard with mismatch info."""
+        self.ensure_one()
+        wizard = self.env['rental.deposit.sync.wizard'].create({
+            'order_id': self.id,
+            'original_action': original_action,
+            'mismatch_info': '\n'.join('• ' + m for m in mismatches),
+        })
+        return {
+            'name': _("Deposit Data Changed"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'rental.deposit.sync.wizard',
+            'res_id': wizard.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def _check_deposit_before_action(self, action_name):
+        """Check deposits and return wizard or False."""
+        self.ensure_one()
+        if self.env.context.get('_skip_deposit_check'):
+            return False
+        if not self.is_rental_order:
+            return False
+        mismatches = self._check_deposit_sync()
+        if mismatches:
+            return self._open_deposit_sync_wizard(action_name, mismatches)
+        return False
+
+    def action_quotation_send(self):
+        wizard = self._check_deposit_before_action('action_quotation_send')
+        if wizard:
+            return wizard
+        return super().action_quotation_send()
+
+    def action_confirm(self):
+        for order in self:
+            wizard = order._check_deposit_before_action('action_confirm')
+            if wizard:
+                return wizard
+        return super().action_confirm()
+
+    def action_preview_sale_order(self):
+        wizard = self._check_deposit_before_action('action_preview_sale_order')
+        if wizard:
+            return wizard
+        return super().action_preview_sale_order()
+
+    def action_print_rental(self):
+        """Custom print action that validates deposits before printing."""
+        self.ensure_one()
+        wizard = self._check_deposit_before_action('action_print_rental')
+        if wizard:
+            return wizard
+        return self.env.ref('sale.action_report_saleorder').report_action(self)
 
     #=== BUSINESS METHODS ===#
 
