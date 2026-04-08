@@ -8,6 +8,20 @@ from odoo.tools import format_amount
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
+    _rec_names_search = ['name', 'default_code', 'sap_article_code']
+
+    _sap_article_code_unique = models.Constraint(
+        'UNIQUE(sap_article_code)',
+        'SAP Article Code must be unique.',
+    )
+
+    sap_article_code = fields.Char(
+        string="SAP Article Code",
+        index=True,
+        copy=False,
+        help="Unique SAP article code for cross-system product identification.",
+    )
+
     rent_ok = fields.Boolean(
         string="Rental",
         default=lambda self: bool(self.env.context.get('in_rental_app')),
@@ -88,6 +102,26 @@ class ProductTemplate(models.Model):
     @api.model
     def _get_incompatible_types(self):
         return ['rent_ok'] + super()._get_incompatible_types()
+
+    def action_download_product_template(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/ggg_rental/download_product_template',
+            'target': 'self',
+        }
+
+    def action_download_pricing_template(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/ggg_rental/download_pricing_template',
+            'target': 'self',
+        }
+
+    def action_import_products(self):
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'ggg_rental.import_products',
+        }
 
     def action_view_rentals(self):
         """Access Schedule view of rental order lines, filtered on variants of

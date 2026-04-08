@@ -1,0 +1,9 @@
+sap_article_code,name,type,categ_id,list_price,rent_ok,extra_hourly,extra_daily,uom_id,tracking,default_code,barcode,description_sale,1 Hour,3 Hours,1 Day,1 Night,1 Week,2 Weeks,1 Month
+IMP-PROJ-001,Projector Epson X500,Storable Product,Goods,15000.00,True,50.00,200.00,Units,serial,PROJ-001,8850100001001,High-end projector for events,200,500,1000,1200,5000,8000,15000
+IMP-SND-001,Sound System JBL Pro,Storable Product,Goods,25000.00,True,100.00,500.00,Units,serial,SND-001,8850100001002,Professional sound system,500,1200,2000,2500,10000,18000,30000
+IMP-TBL-001,Folding Table 6ft,Storable Product,Goods,3000.00,True,0.00,100.00,Units,none,TBL-001,,6ft folding table for outdoor events,,,,150,,800,2500
+IMP-CHR-001,Folding Chair Standard,Storable Product,Goods,800.00,True,0.00,30.00,Units,none,CHR-001,,Standard folding chair,,,,50,,250,800
+IMP-CAM-001,Canon EOS R5 Camera,Storable Product,Goods,120000.00,True,200.00,1000.00,Units,serial,CAM-001,8850100001003,Professional mirrorless camera,800,2000,5000,6000,25000,45000,80000
+IMP-LED-001,LED Stage Light 200W,Storable Product,Goods,8000.00,True,30.00,150.00,Units,serial,LED-001,,200W LED stage lighting,,500,800,1000,3500,6000,10000
+IMP-SCR-001,Projection Screen 120inch,Storable Product,Goods,12000.00,True,0.00,200.00,Units,none,SCR-001,,120 inch portable projection screen,,,500,600,2000,3500,6000
+IMP-MIC-001,Wireless Microphone Shure,Storable Product,Goods,15000.00,True,50.00,200.00,Units,serial,MIC-001,8850100001004,Professional wireless microphone system,300,700,1500,1800,7000,12000,20000

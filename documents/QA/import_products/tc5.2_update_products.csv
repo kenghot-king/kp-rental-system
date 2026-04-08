@@ -1,0 +1,4 @@
+sap_article_code,name,type,categ_id,list_price,rent_ok,extra_hourly,extra_daily,uom_id,tracking,default_code,barcode,description_sale,1 Day,1 Week,1 Month
+IMP-PROJ-001,Projector Epson X500 (Updated),Storable Product,Goods,16000.00,True,60.00,250.00,Units,serial,PROJ-001,8850100001001,High-end projector for events - UPDATED price,1200,5500,16000
+IMP-CHR-001,Folding Chair Premium,Storable Product,Goods,1200.00,True,0.00,50.00,Units,none,CHR-002,,Premium folding chair - upgraded model,80,400,1200
+IMP-CAM-001,Canon EOS R5 Camera,Storable Product,Goods,120000.00,True,200.00,1000.00,Units,serial,CAM-001,8850100001003,Professional mirrorless camera,5500,27000,85000

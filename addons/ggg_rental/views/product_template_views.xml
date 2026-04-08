@@ -44,6 +44,9 @@
                     </group>
                 </page>
             </page>
+            <field name="categ_id" position="after">
+                <field name="sap_article_code" invisible="not rent_ok"/>
+            </field>
             <span name="sale_option" position="after">
                 <span class="d-inline-flex">
                     <field name="rent_ok"/>
@@ -92,6 +95,9 @@
         <field name="inherit_id" ref="product.product_template_tree_view"/>
         <field name="mode">primary</field>
         <field name="arch" type="xml">
+            <field name="default_code" position="before">
+                <field name="sap_article_code" optional="show"/>
+            </field>
             <field name="list_price" position="after">
                 <field name="display_price"/>
             </field>
@@ -169,5 +175,6 @@
         <field name="view_id" ref="product_template_tree_view"/>
         <field name="act_window_id" ref="rental_product_template_action"/>
     </record>
+
 
 </odoo>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ggg_rental.DownloadProductTemplate">
+        <DropdownItem onSelected.bind="onClick">
+            <i class="fa fa-fw fa-download me-1"/>Download Product Template
+        </DropdownItem>
+    </t>
+
+    <t t-name="ggg_rental.DownloadPricingTemplate">
+        <DropdownItem onSelected.bind="onClick">
+            <i class="fa fa-fw fa-download me-1"/>Download Pricing Template
+        </DropdownItem>
+    </t>
+
+    <t t-name="ggg_rental.ImportProducts">
+        <DropdownItem onSelected.bind="onClick">
+            <i class="fa fa-fw fa-upload me-1"/>Import Products (CSV)
+        </DropdownItem>
+    </t>
+
+</templates>

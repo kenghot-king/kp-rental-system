@@ -1,0 +1,6 @@
+sap_article_code,name,type,categ_id,list_price,rent_ok,extra_hourly,extra_daily,uom_id,tracking,default_code,description_sale,1 Day,1 Week,6 Months,InvalidCol
+IMP-EDGE-001,Edge Case Product 1,Storable Product,Goods,5000.00,True,0.00,100.00,Units,none,EDGE-001,Normal product with unknown columns,500,2000,,
+,Missing SAP Code Product,Storable Product,Goods,1000.00,True,0.00,50.00,Units,none,EDGE-002,This row should be skipped - no SAP code,100,500,,
+IMP-EDGE-002,Edge Case Product 2,Storable Product,Goods,3000.00,True,0.00,80.00,Units,none,EDGE-003,Product with invalid pricing,abc,2000,,
+IMP-EDGE-001,Duplicate SAP Code,Storable Product,Goods,9999.00,True,0.00,0.00,Units,none,EDGE-004,Second row with same SAP code should update,600,2500,,
+IMP-EDGE-003,Empty Pricing Test,Storable Product,Goods,7000.00,True,0.00,100.00,Units,none,EDGE-005,Product with some empty pricing cells,800,,,
