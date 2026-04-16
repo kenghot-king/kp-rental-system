@@ -1,0 +1,11 @@
+/* Rental Contract Terms — full-width html editor in settings */
+.o_field_html[name="rental_contract_terms"] {
+    width: 100% !important;
+    display: block;
+}
+
+.o_field_html[name="rental_contract_terms"] .odoo-editor-editable {
+    min-height: 350px;
+    width: 100% !important;
+    box-sizing: border-box;
+}

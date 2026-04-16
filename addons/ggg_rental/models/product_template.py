@@ -55,6 +55,12 @@ class ProductTemplate(models.Model):
         help="Mark this product as a rental security deposit.",
     )
 
+    deposit_price = fields.Float(
+        string="Deposit Price",
+        company_dependent=True,
+        help="Security deposit amount charged per unit for this rental product.",
+    )
+
     # Delays pricing
     extra_hourly = fields.Float(
         "Hourly Fine", help="Fine per hour late", company_dependent=True,

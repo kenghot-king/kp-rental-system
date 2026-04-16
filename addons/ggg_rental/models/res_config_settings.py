@@ -52,6 +52,16 @@ class ResConfigSettings(models.TransientModel):
         related='company_id.deposit_auto_refund',
         readonly=False,
     )
+    require_payment_before_pickup = fields.Boolean(
+        string="Require Payment Before Pickup",
+        related='company_id.require_payment_before_pickup',
+        readonly=False,
+    )
+    rental_contract_terms = fields.Html(
+        string="Rental Contract Terms",
+        related='company_id.rental_contract_terms',
+        readonly=False,
+    )
     rental_loc_id = fields.Many2one(
         string="Rental Stock Location",
         help="Internal location for products currently in rental.",

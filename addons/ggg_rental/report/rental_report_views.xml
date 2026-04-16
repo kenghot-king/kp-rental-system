@@ -95,6 +95,15 @@
         </field>
     </record>
 
+    <record id="action_report_rental_contract" model="ir.actions.report">
+        <field name="name">Rental Contract</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ggg_rental.report_rental_contract</field>
+        <field name="report_file">ggg_rental.report_rental_contract</field>
+        <field name="print_report_name">'Rental Contract - %s' % object.name</field>
+    </record>
+
     <record id="action_report_rental_saleorder" model="ir.actions.report">
         <field name="name">Pickup and Return Receipt</field>
         <field name="model">sale.order</field>

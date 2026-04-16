@@ -39,6 +39,20 @@ class ResCompany(models.Model):
         help="Automatically register a refund payment when a deposit credit note is created on return.",
     )
 
+    # Rental Contract
+    rental_contract_terms = fields.Html(
+        string="Rental Contract Terms",
+        company_dependent=True,
+        help="Terms and conditions printed on rental contracts. Supports rich text formatting.",
+    )
+
+    # Pickup
+    require_payment_before_pickup = fields.Boolean(
+        "Require Payment Before Pickup",
+        default=False,
+        help="Block the pickup process until all posted customer invoices on the rental order are fully paid.",
+    )
+
     # Rental Inventory
     rental_loc_id = fields.Many2one(
         "stock.location", string="Rental Location",

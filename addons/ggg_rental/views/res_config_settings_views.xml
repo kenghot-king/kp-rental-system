@@ -78,6 +78,22 @@
                             <field name="deposit_auto_refund"/>
                         </setting>
                     </block>
+                    <block title="Pickup">
+                        <setting name="require_payment_before_pickup_setting" string="Require Payment Before Pickup" help="Block the pickup process until all posted customer invoices are fully paid">
+                            <field name="require_payment_before_pickup"/>
+                        </setting>
+                    </block>
+                    <block title="Rental Contract">
+                        <div class="o_setting_box w-100">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane w-100">
+                                <div class="o_form_label fw-bold">Contract Terms</div>
+                                <div class="text-muted small mb-2">Terms and conditions printed on rental contracts</div>
+                                <field name="rental_contract_terms" widget="html"
+                                    options='{"toolbar": true, "resizable": true}'/>
+                            </div>
+                        </div>
+                    </block>
                 </app>
             </xpath>
         </field>

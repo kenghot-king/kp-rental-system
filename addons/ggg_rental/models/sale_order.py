@@ -134,6 +134,17 @@ class SaleOrder(models.Model):
         compute='_compute_rental_stock_move_count',
     )
 
+    rental_lines_subtotal = fields.Monetary(
+        string="Rental Lines Subtotal",
+        compute='_compute_rental_contract_totals',
+        currency_field='currency_id',
+    )
+    deposit_lines_subtotal = fields.Monetary(
+        string="Deposit Lines Subtotal",
+        compute='_compute_rental_contract_totals',
+        currency_field='currency_id',
+    )
+
     #=== COMPUTE METHODS ===#
 
     @api.depends('order_line.is_rental')
@@ -249,6 +260,14 @@ class SaleOrder(models.Model):
             action.update(view_mode='form', res_id=moves.id)
         return action
 
+    @api.depends('order_line.price_subtotal', 'order_line.is_rental', 'order_line.deposit_parent_id')
+    def _compute_rental_contract_totals(self):
+        for order in self:
+            rental = order.order_line.filtered(lambda l: l.is_rental and not l.deposit_parent_id)
+            deposit = order.order_line.filtered(lambda l: bool(l.deposit_parent_id))
+            order.rental_lines_subtotal = sum(rental.mapped('price_subtotal'))
+            order.deposit_lines_subtotal = sum(deposit.mapped('price_subtotal'))
+
     #=== SEARCH METHODS ===#
 
     def _search_is_late(self, operator, value):
@@ -328,6 +347,18 @@ class SaleOrder(models.Model):
 
     def action_open_pickup(self):
         self.ensure_one()
+        if self.company_id.require_payment_before_pickup:
+            posted_invoices = self.invoice_ids.filtered(
+                lambda inv: inv.state == 'posted' and inv.move_type == 'out_invoice'
+            )
+            if not posted_invoices:
+                raise UserError(_("Cannot process pickup: no invoice has been issued for this order."))
+            unpaid = posted_invoices.filtered(lambda inv: inv.payment_state != 'paid')
+            if unpaid:
+                raise UserError(_(
+                    "Cannot process pickup: the following invoice(s) are not fully paid: %s",
+                    ', '.join(unpaid.mapped('name'))
+                ))
         precision = self.env['decimal.precision'].precision_get('Product Unit')
         lines_to_pickup = self.order_line.filtered(
             lambda r: (
@@ -492,23 +523,23 @@ class SaleOrder(models.Model):
             orphaned.unlink()
 
         for line in rental_lines:
-            expected_price = line.product_id.list_price
+            expected_price = line.product_id.product_tmpl_id.with_company(self.company_id).deposit_price
             expected_qty = line.product_uom_qty
             deposit = deposit_map.get(line.id)
 
+            expected_tax_ids = deposit_product.taxes_id.ids
+
             if deposit:
-                # Update drifted values
-                update_vals = {}
+                # Always write price_unit explicitly to prevent _compute_price_unit
+                # from resetting it when other fields (e.g. qty) are written.
+                update_vals = {'price_unit': expected_price}
                 if deposit.product_uom_qty != expected_qty:
                     update_vals['product_uom_qty'] = expected_qty
-                if deposit.price_unit != expected_price:
-                    update_vals['price_unit'] = expected_price
-                if deposit.tax_ids != line.tax_ids:
-                    update_vals['tax_ids'] = [Command.set(line.tax_ids.ids)]
+                if deposit.tax_ids.ids != expected_tax_ids:
+                    update_vals['tax_ids'] = [Command.set(expected_tax_ids)]
                 if deposit.name != _("[Deposit] %(product)s", product=line.product_id.name):
                     update_vals['name'] = _("[Deposit] %(product)s", product=line.product_id.name)
-                if update_vals:
-                    deposit.write(update_vals)
+                deposit.write(update_vals)
             else:
                 # Create missing deposit line
                 self.env['sale.order.line'].create({
@@ -517,7 +548,7 @@ class SaleOrder(models.Model):
                     'name': _("[Deposit] %(product)s", product=line.product_id.name),
                     'price_unit': expected_price,
                     'product_uom_qty': expected_qty,
-                    'tax_ids': [Command.set(line.tax_ids.ids)],
+                    'tax_ids': [Command.set(expected_tax_ids)],
                     'deposit_parent_id': line.id,
                     'sequence': line.sequence + 1,
                     'is_rental': False,
@@ -565,13 +596,6 @@ class SaleOrder(models.Model):
                         product=line.product_id.name,
                         dep_qty=int(deposit.product_uom_qty),
                         rent_qty=int(line.product_uom_qty),
-                    ))
-                if deposit.price_unit != line.product_id.list_price:
-                    mismatches.append(_(
-                        "%(product)s: deposit price %(dep_price)s ≠ product price %(prod_price)s",
-                        product=line.product_id.name,
-                        dep_price=deposit.price_unit,
-                        prod_price=line.product_id.list_price,
                     ))
 
         return mismatches or False
@@ -631,6 +655,16 @@ class SaleOrder(models.Model):
         if wizard:
             return wizard
         return self.env.ref('sale.action_report_saleorder').report_action(self)
+
+    def action_print_rental_contract(self):
+        """Print the rental contract. Blocked until the order is at least pickup-ready."""
+        self.ensure_one()
+        if self.rental_status not in ('pickup', 'return', 'returned'):
+            raise UserError(_(
+                "The rental contract can only be printed once the order is confirmed and reserved. "
+                "Please confirm the order first."
+            ))
+        return self.env.ref('ggg_rental.action_report_rental_contract').report_action(self)
 
     #=== BUSINESS METHODS ===#
 

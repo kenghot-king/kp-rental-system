@@ -73,6 +73,9 @@
                 <button name="action_print_rental" type="object" string="Print"
                     invisible="not is_rental_order"
                     groups="base.group_user"/>
+                <button name="action_print_rental_contract" type="object" string="Print Contract"
+                    invisible="not is_rental_order or rental_status not in ('pickup', 'return', 'returned')"
+                    groups="base.group_user"/>
             </button>
             <!-- Sync Deposits button above order lines -->
             <xpath expr="//field[@name='order_line']" position="before">

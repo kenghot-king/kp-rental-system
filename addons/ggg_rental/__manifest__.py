@@ -30,6 +30,7 @@ Manage user and manager notifications.
         'views/stock_lot_views.xml',
         'views/account_payment_views.xml',
         'report/rental_order_report_templates.xml',
+        'report/rental_contract_templates.xml',
         'report/rental_report_views.xml',
         'wizard/account_payment_register_views.xml',
         'wizard/rental_deposit_sync_views.xml',
@@ -45,6 +46,10 @@ Manage user and manager notifications.
     'assets': {
         'web.assets_backend': [
             'ggg_rental/static/src/js/**/*',
+            'ggg_rental/static/src/css/rental_settings.css',
+        ],
+        'web.report_assets_common': [
+            'ggg_rental/static/src/css/rental_report_font.css',
         ],
         'web.assets_backend_lazy': [
             'ggg_rental/static/src/views/schedule_gantt/**',

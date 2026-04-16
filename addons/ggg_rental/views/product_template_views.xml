@@ -41,6 +41,9 @@
                             </div>
                             <field name="currency_id" invisible="1"/>
                         </group>
+                        <group string="Deposit" name="deposit_pricing" invisible="not rent_ok">
+                            <field name="deposit_price" widget="monetary"/>
+                        </group>
                     </group>
                 </page>
             </page>
