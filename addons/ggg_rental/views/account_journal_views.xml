@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_journal_form_rental" model="ir.ui.view">
+        <field name="name">account.journal.form.rental</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            <field name="type" position="after">
+                <field name="channel_type"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_account_journal_search_rental" model="ir.ui.view">
+        <field name="name">account.journal.search.rental</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="after">
+                <separator/>
+                <group>
+                    <filter string="Channel Type"
+                            name="group_by_channel_type"
+                            context="{'group_by': 'channel_type'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

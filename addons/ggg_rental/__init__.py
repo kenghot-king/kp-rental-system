@@ -9,6 +9,8 @@ def _post_init_rental(env):
     """Create rental locations for existing companies on module install."""
     env['res.company'].create_missing_rental_location()
     env['res.company'].create_missing_rental_support_locations()
+    # Rebuild the unreconciled-tuples view now that all columns are guaranteed to exist.
+    env['rental.daily.reconciliation.needed'].init()
 
 
 def _pre_init_rental(env):

@@ -7,11 +7,14 @@
         <field name="arch" type="xml">
             <field name="memo" position="after">
                 <field name="is_rental_payment" invisible="1"/>
+                <field name="cashier_id" readonly="1"/>
+                <field name="approval_code"/>
                 <field name="payment_reference"
                     string="Reference 1"
                     invisible="not is_rental_payment"/>
                 <field name="payment_reference_2"
                     invisible="not is_rental_payment"/>
+                <field name="display_method" invisible="1"/>
             </field>
         </field>
     </record>

@@ -51,9 +51,30 @@
 
         <menuitem id="menu_rental_reporting"
             name="Reporting"
-            action="action_rental_report"
             groups="sales_team.group_sale_manager"
-            sequence="5"/>
+            sequence="5">
+
+            <menuitem id="menu_rental_reporting_analysis"
+                name="Rental Analysis"
+                action="action_rental_report"
+                sequence="1"/>
+
+            <menuitem id="menu_rental_reporting_invoices"
+                name="Invoices"
+                action="account.action_move_out_invoice_type"
+                sequence="10"/>
+
+            <menuitem id="menu_rental_reporting_payments"
+                name="Payments"
+                action="account.action_account_payments"
+                sequence="20"/>
+
+            <menuitem id="menu_rental_reporting_by_item"
+                name="By Item"
+                action="action_rental_invoice_by_item"
+                sequence="30"/>
+
+        </menuitem>
 
         <menuitem id="menu_rental_config"
             name="Configuration"

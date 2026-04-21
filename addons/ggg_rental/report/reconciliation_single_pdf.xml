@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="action_report_reconciliation_pdf" model="ir.actions.report">
+        <field name="name">Daily Reconciliation</field>
+        <field name="model">rental.daily.reconciliation</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ggg_rental.report_reconciliation_single_pdf</field>
+        <field name="report_file">ggg_rental.report_reconciliation_single_pdf</field>
+        <field name="binding_model_id" ref="model_rental_daily_reconciliation"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_reconciliation_single_pdf">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="rec">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Daily Payment Reconciliation</h2>
+                        <table class="table table-sm" style="width:100%">
+                            <tr>
+                                <td><strong>Cashier</strong></td>
+                                <td><t t-esc="rec.cashier_id.name"/></td>
+                                <td><strong>Date</strong></td>
+                                <td><t t-esc="rec.date"/></td>
+                                <td><strong>Status</strong></td>
+                                <td><t t-esc="dict(rec._fields['state'].selection).get(rec.state, rec.state)"/></td>
+                            </tr>
+                            <t t-if="rec.confirmed_by">
+                            <tr>
+                                <td><strong>Confirmed By</strong></td>
+                                <td><t t-esc="rec.confirmed_by.name"/></td>
+                                <td><strong>Confirmed At</strong></td>
+                                <td><t t-esc="rec.confirmed_at"/></td>
+                                <td></td><td></td>
+                            </tr>
+                            </t>
+                        </table>
+
+                        <br/>
+
+                        <table class="table table-bordered table-sm" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>Journal</th>
+                                    <th class="text-right">Expected</th>
+                                    <th class="text-right">Actual</th>
+                                    <th class="text-right">Variance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="rec.line_ids" t-as="line">
+                                <tr>
+                                    <td><t t-esc="line.display_method or ''"/></td>
+                                    <td><t t-esc="line.journal_id.name or ''"/></td>
+                                    <td class="text-right">
+                                        <t t-esc="line.expected_amount"
+                                           t-options='{"widget": "monetary", "display_currency": rec.env.company.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <t t-esc="line.actual_amount or 0.0"
+                                           t-options='{"widget": "monetary", "display_currency": rec.env.company.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <t t-esc="line.variance"
+                                           t-options='{"widget": "monetary", "display_currency": rec.env.company.currency_id}'/>
+                                    </td>
+                                </tr>
+                                </t>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="2">Total</th>
+                                    <th class="text-right">
+                                        <t t-esc="rec.expected_total"
+                                           t-options='{"widget": "monetary", "display_currency": rec.env.company.currency_id}'/>
+                                    </th>
+                                    <th class="text-right">
+                                        <t t-esc="rec.actual_total"
+                                           t-options='{"widget": "monetary", "display_currency": rec.env.company.currency_id}'/>
+                                    </th>
+                                    <th class="text-right">
+                                        <t t-esc="rec.variance_total"
+                                           t-options='{"widget": "monetary", "display_currency": rec.env.company.currency_id}'/>
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <t t-if="rec.note">
+                            <p><strong>Note:</strong> <t t-esc="rec.note"/></p>
+                        </t>
+
+                        <br/><br/>
+                        <table style="width:100%; border-top: 1px solid #aaa; margin-top: 40px;">
+                            <tr>
+                                <td style="width:33%; padding-top: 8px;">
+                                    <strong>Cashier Signature</strong><br/><br/><br/>
+                                    <t t-esc="rec.cashier_id.name"/>
+                                </td>
+                                <td style="width:33%; padding-top: 8px;">
+                                    <strong>Supervisor Signature</strong><br/><br/><br/>
+                                    <t t-esc="rec.confirmed_by.name if rec.confirmed_by else ''"/>
+                                </td>
+                                <td style="width:33%; padding-top: 8px;">
+                                    <strong>Date</strong><br/><br/><br/>
+                                    <t t-esc="rec.date"/>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

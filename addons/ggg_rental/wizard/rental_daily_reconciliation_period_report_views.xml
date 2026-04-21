@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="view_rental_daily_reconciliation_period_report_form" model="ir.ui.view">
+        <field name="name">rental.daily.reconciliation.period.report.wizard.form</field>
+        <field name="model">rental.daily.reconciliation.period.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Export Period Reconciliation Report">
+                <group>
+                    <group string="Date Range">
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <group string="Options">
+                        <field name="cashier_ids" widget="many2many_tags"/>
+                        <field name="report_format"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_generate" string="Export" type="object"
+                            class="oe_highlight"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_rental_reconciliation_period_report_wizard" model="ir.actions.act_window">
+        <field name="name">Export Period Report</field>
+        <field name="res_model">rental.daily.reconciliation.period.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+
+    <menuitem id="menu_rental_reconciliation_period_report"
+              name="Export Period Report"
+              parent="ggg_rental.menu_rental_reconciliation_root"
+              action="action_rental_reconciliation_period_report_wizard"
+              sequence="30"
+              groups="ggg_rental.group_rental_supervisor"/>
+
+</odoo>

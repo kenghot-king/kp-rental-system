@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <field name="communication" position="after">
                 <field name="is_rental_payment" invisible="1"/>
+                <field name="approval_code"/>
                 <field name="payment_reference"
                     invisible="not is_rental_payment"/>
                 <field name="payment_reference_2"
