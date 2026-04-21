@@ -52,6 +52,11 @@ class ResCompany(models.Model):
         default=False,
         help="Block the pickup process until all posted customer invoices on the rental order are fully paid.",
     )
+    auto_confirm_invoice = fields.Boolean(
+        "Auto Confirm Invoice",
+        default=True,
+        help="Automatically confirm (post) invoices immediately after creation from a rental order, making them ready for payment.",
+    )
 
     # Rental Inventory
     rental_loc_id = fields.Many2one(
@@ -59,6 +64,16 @@ class ResCompany(models.Model):
         domain=[('usage', '=', 'internal')],
         help="Internal location for products currently in rental. "
              "Products remain in inventory valuation.",
+    )
+    damage_loc_id = fields.Many2one(
+        "stock.location", string="Damage Location",
+        domain=[('usage', '=', 'internal')],
+        help="Internal location for products returned in damaged condition.",
+    )
+    inspection_loc_id = fields.Many2one(
+        "stock.location", string="Inspection Location",
+        domain=[('usage', '=', 'internal')],
+        help="Internal location for products returned pending inspection.",
     )
 
     _min_extra_hour = models.Constraint(
@@ -69,11 +84,21 @@ class ResCompany(models.Model):
     def _create_per_company_locations(self):
         super()._create_per_company_locations()
         self._create_rental_location()
+        self._create_rental_support_locations()
 
     @api.model
     def create_missing_rental_location(self):
         companies = self.env['res.company'].search([('rental_loc_id', '=', False)])
         companies._create_rental_location()
+
+    @api.model
+    def create_missing_rental_support_locations(self):
+        companies = self.env['res.company'].search([
+            '|',
+            ('damage_loc_id', '=', False),
+            ('inspection_loc_id', '=', False),
+        ])
+        companies._create_rental_support_locations()
 
     def _create_rental_location(self):
         rental_loc_values = []
@@ -91,3 +116,34 @@ class ResCompany(models.Model):
         company_rental_loc = {loc.company_id.id: loc for loc in rental_locs}
         for company in rental_locs.company_id:
             company.rental_loc_id = company_rental_loc.get(company.id, False)
+
+    def _create_rental_support_locations(self):
+        """Create Damage and Inspection locations for companies missing them."""
+        parent_loc = self.env.ref('stock.stock_location_locations')
+        damage_vals = []
+        inspection_vals = []
+        for company in self.sudo():
+            if not company.damage_loc_id:
+                damage_vals.append({
+                    "name": self.env._("Damage"),
+                    "usage": "internal",
+                    "company_id": company.id,
+                    "location_id": parent_loc.id,
+                })
+            if not company.inspection_loc_id:
+                inspection_vals.append({
+                    "name": self.env._("Inspection"),
+                    "usage": "internal",
+                    "company_id": company.id,
+                    "location_id": parent_loc.id,
+                })
+        if damage_vals:
+            damage_locs = self.env['stock.location'].sudo().create(damage_vals)
+            company_damage_loc = {loc.company_id.id: loc for loc in damage_locs}
+            for company in damage_locs.company_id:
+                company.damage_loc_id = company_damage_loc.get(company.id, False)
+        if inspection_vals:
+            inspection_locs = self.env['stock.location'].sudo().create(inspection_vals)
+            company_inspection_loc = {loc.company_id.id: loc for loc in inspection_locs}
+            for company in inspection_locs.company_id:
+                company.inspection_loc_id = company_inspection_loc.get(company.id, False)

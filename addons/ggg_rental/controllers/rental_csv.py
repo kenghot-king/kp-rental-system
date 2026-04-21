@@ -9,13 +9,17 @@ PRODUCT_FIELDS = [
     'sap_article_code',
     'name',
     'type',
+    'is_storable',
     'categ_id',
     'list_price',
+    'sale_ok',
     'rent_ok',
     'extra_hourly',
     'extra_daily',
+    'deposit_price',
     'uom_id',
     'tracking',
+    'taxes_id',
     'default_code',
     'barcode',
     'description_sale',
@@ -23,7 +27,7 @@ PRODUCT_FIELDS = [
 
 PRODUCT_FIELD_MAP = {
     'type': {
-        'consu': 'Storable Product',
+        'consu': 'Goods',
         'service': 'Service',
         'combo': 'Combo',
     },
@@ -52,32 +56,54 @@ class RentalCSVController(http.Controller):
 
         headers = PRODUCT_FIELDS + recurrence_headers
 
-        # Build example row
-        categories = request.env['product.category'].search([], limit=1)
-        uoms = request.env['uom.uom'].search([('name', '=', 'Units')], limit=1)
-        example = {
-            'sap_article_code': 'SAP-001',
-            'name': 'Example Rental Product',
-            'type': 'Storable Product',
-            'categ_id': categories[0].complete_name if categories else 'Goods',
-            'list_price': '15000.00',
-            'rent_ok': 'True',
-            'extra_hourly': '50.00',
-            'extra_daily': '200.00',
-            'uom_id': uoms[0].name if uoms else 'Units',
-            'tracking': 'serial',
-            'default_code': 'EX-001',
-            'barcode': '',
-            'description_sale': 'Example product for rental',
+        # Build recurrence map: record -> display header
+        recurrence_map = {
+            r: r.with_context(lang='en_US').duration_display for r in recurrences
         }
-        # Add example pricing for first few recurrences
-        for i, header in enumerate(recurrence_headers):
-            example[header] = str((i + 1) * 500) if i < 3 else ''
+
+        # Fetch up to 10 existing rental products as sample rows
+        products = request.env['product.template'].search(
+            [('rent_ok', '=', True)], limit=10, order='id asc'
+        )
+
+        rows = []
+        for product in products:
+            type_label = PRODUCT_FIELD_MAP['type'].get(product.type, product.type)
+            taxes = product.taxes_id.filtered(lambda t: t.type_tax_use == 'sale')
+            row = {
+                'sap_article_code': product.sap_article_code or '',
+                'name': product.name or '',
+                'type': type_label,
+                'is_storable': str(product.is_storable),
+                'categ_id': product.categ_id.complete_name if product.categ_id else '',
+                'list_price': str(product.list_price),
+                'sale_ok': str(product.sale_ok),
+                'rent_ok': str(product.rent_ok),
+                'extra_hourly': str(product.extra_hourly),
+                'extra_daily': str(product.extra_daily),
+                'deposit_price': str(product.deposit_price),
+                'uom_id': product.uom_id.name if product.uom_id else '',
+                'tracking': product.tracking or 'none',
+                'taxes_id': ';'.join(taxes.mapped('name')),
+                'default_code': product.default_code or '',
+                'barcode': product.barcode or '',
+                'description_sale': product.description_sale or '',
+            }
+            # Pricing per recurrence period
+            pricing_map = {
+                p.recurrence_id: p.price
+                for p in product.product_pricing_ids
+                if not p.pricelist_id
+            }
+            for recurrence, header in recurrence_map.items():
+                price = pricing_map.get(recurrence)
+                row[header] = str(price) if price is not None else ''
+            rows.append(row)
 
         output = io.StringIO()
         writer = csv.DictWriter(output, fieldnames=headers)
         writer.writeheader()
-        writer.writerow(example)
+        writer.writerows(rows)
 
         content = output.getvalue().encode('utf-8-sig')
         return request.make_response(
@@ -177,7 +203,7 @@ class RentalCSVController(http.Controller):
                 if existing:
                     # Update product fields (unless pricing-only import)
                     if not is_pricing_only:
-                        vals = self._prepare_product_vals(row, product_columns)
+                        vals = self._prepare_product_vals(row, product_columns, warnings)
                         if vals:
                             existing.write(vals)
 
@@ -192,7 +218,7 @@ class RentalCSVController(http.Controller):
                         )
                         continue
 
-                    vals = self._prepare_product_vals(row, product_columns)
+                    vals = self._prepare_product_vals(row, product_columns, warnings)
                     vals['sap_article_code'] = sap_code
                     vals['rent_ok'] = True
                     product = ProductTemplate.create(vals)
@@ -214,8 +240,10 @@ class RentalCSVController(http.Controller):
             'warnings': warnings,
         })
 
-    def _prepare_product_vals(self, row, columns):
+    def _prepare_product_vals(self, row, columns, warnings=None):
         """Convert CSV row values to Odoo field values."""
+        if warnings is None:
+            warnings = []
         vals = {}
         for col in columns:
             if col == 'sap_article_code':
@@ -238,16 +266,31 @@ class RentalCSVController(http.Controller):
                 )
                 if uom:
                     vals[col] = uom.id
-            elif col in ('list_price', 'extra_hourly', 'extra_daily'):
+            elif col in ('list_price', 'extra_hourly', 'extra_daily', 'deposit_price'):
                 try:
                     vals[col] = float(raw)
                 except ValueError:
                     pass
-            elif col == 'rent_ok':
+            elif col in ('rent_ok', 'sale_ok', 'is_storable'):
                 vals[col] = raw.lower() in ('true', '1', 'yes')
             elif col == 'tracking':
                 if raw in ('none', 'lot', 'serial'):
                     vals[col] = raw
+            elif col == 'taxes_id':
+                tax_names = [n.strip() for n in raw.split(';') if n.strip()]
+                tax_ids = []
+                for tax_name in tax_names:
+                    tax = request.env['account.tax'].search([
+                        ('name', '=', tax_name),
+                        ('type_tax_use', '=', 'sale'),
+                        ('active', '=', True),
+                    ], limit=1)
+                    if tax:
+                        tax_ids.append(tax.id)
+                    else:
+                        warnings.append(f"Tax '{tax_name}' not found — skipped")
+                if tax_ids:
+                    vals[col] = [(6, 0, tax_ids)]
             else:
                 vals[col] = raw
 

@@ -98,6 +98,9 @@
         <field name="inherit_id" ref="product.product_template_tree_view"/>
         <field name="mode">primary</field>
         <field name="arch" type="xml">
+            <list position="attributes">
+                <attribute name="js_class">rental_product_list</attribute>
+            </list>
             <field name="default_code" position="before">
                 <field name="sap_article_code" optional="show"/>
             </field>

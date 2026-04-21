@@ -43,12 +43,12 @@
                                 column_invisible="parent.status == 'pickup'"/>
                             <field name="damage_fee"
                                 column_invisible="parent.status == 'pickup'"
-                                invisible="condition != 'damaged'"
+                                invisible="condition not in ('damaged', 'inspect')"
                                 widget="monetary"/>
                             <field name="damage_reason"
                                 column_invisible="parent.status == 'pickup'"
-                                invisible="condition != 'damaged'"
-                                placeholder="Reason for damage"/>
+                                invisible="condition not in ('damaged', 'inspect')"
+                                placeholder="Reason for damage/inspection"/>
                             <field name="status" column_invisible="True"/>
                             <button icon="fa-clock-o" column_invisible="not parent.is_late or parent.status == 'pickup'"
                                 class="text-danger" title="Some delay cost will be added to the sales order."/>

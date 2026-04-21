@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ggg_rental.CompletionBadgePopover">
+        <div class="o_completion_badge_popover p-2">
+            <t t-if="props.isComplete">
+                <div class="text-success fw-bold">
+                    <i class="fa fa-check-circle me-1"/>All conditions met
+                </div>
+            </t>
+            <t t-else="">
+                <div class="o_completion_badge_popover_detail" style="white-space: pre-line;">
+                    <t t-esc="props.detail"/>
+                </div>
+            </t>
+        </div>
+    </t>
+
+</templates>

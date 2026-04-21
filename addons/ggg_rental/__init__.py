@@ -8,6 +8,7 @@ from odoo.tools.sql import column_exists
 def _post_init_rental(env):
     """Create rental locations for existing companies on module install."""
     env['res.company'].create_missing_rental_location()
+    env['res.company'].create_missing_rental_support_locations()
 
 
 def _pre_init_rental(env):
@@ -32,4 +33,14 @@ def _pre_init_rental(env):
         env.cr.execute("""
             ALTER TABLE "res_company"
             ADD COLUMN "rental_loc_id" integer
+        """)
+    if not column_exists(env.cr, 'res_company', 'damage_loc_id'):
+        env.cr.execute("""
+            ALTER TABLE "res_company"
+            ADD COLUMN "damage_loc_id" integer
+        """)
+    if not column_exists(env.cr, 'res_company', 'inspection_loc_id'):
+        env.cr.execute("""
+            ALTER TABLE "res_company"
+            ADD COLUMN "inspection_loc_id" integer
         """)

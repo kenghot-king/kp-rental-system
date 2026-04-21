@@ -1,3 +1,4 @@
+import logging
 from dateutil.relativedelta import relativedelta
 from math import ceil
 
@@ -5,6 +6,8 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.fields import Command, Domain
 from odoo.tools import float_compare, float_is_zero
+
+_logger = logging.getLogger(__name__)
 
 
 RENTAL_STATUS = [
@@ -127,6 +130,17 @@ class SaleOrder(models.Model):
              " This excludes any grace period before late fees apply.",
         compute='_compute_is_late',
         search='_search_is_late',
+    )
+
+    rental_completion = fields.Selection(
+        selection=[('complete', "Complete"), ('incomplete', "Incomplete")],
+        string="Completion",
+        compute='_compute_rental_completion',
+        store=True,
+    )
+    rental_completion_detail = fields.Char(
+        string="Completion Detail",
+        compute='_compute_rental_completion',
     )
 
     rental_stock_move_count = fields.Integer(
@@ -267,6 +281,90 @@ class SaleOrder(models.Model):
             deposit = order.order_line.filtered(lambda l: bool(l.deposit_parent_id))
             order.rental_lines_subtotal = sum(rental.mapped('price_subtotal'))
             order.deposit_lines_subtotal = sum(deposit.mapped('price_subtotal'))
+
+    @api.depends(
+        'is_rental_order',
+        'state',
+        'order_line.qty_delivered',
+        'order_line.qty_returned',
+        'order_line.is_rental',
+    )
+    def _compute_rental_completion(self):
+        for order in self:
+            if not order.is_rental_order or order.state != 'sale':
+                order.rental_completion = False
+                order.rental_completion_detail = False
+                continue
+
+            # Axis 1: Returned
+            rental_lines = order.order_line.filtered('is_rental')
+            total_delivered = sum(rental_lines.mapped('qty_delivered'))
+            total_returned = sum(rental_lines.mapped('qty_returned'))
+            all_returned = total_returned >= total_delivered and total_delivered > 0
+
+            # Axis 2: Paid (posted out_invoices, excluding deposit invoices)
+            deposit_invoices = order._get_deposit_invoices()
+            deposit_invoice_ids = set(deposit_invoices.ids)
+            non_deposit_invoices = order.invoice_ids.filtered(
+                lambda inv: inv.state == 'posted'
+                and inv.move_type == 'out_invoice'
+                and inv.id not in deposit_invoice_ids
+            )
+            total_invoices = len(non_deposit_invoices)
+            paid_invoices = len(non_deposit_invoices.filtered(
+                lambda inv: inv.payment_state == 'paid'
+            ))
+            all_paid = paid_invoices >= total_invoices
+
+            # Axis 3: Deposit refunded
+            if deposit_invoices:
+                total_deposit_amount = sum(deposit_invoices.mapped('amount_total'))
+                total_refunded = 0.0
+                for dep_inv in deposit_invoices:
+                    credits = dep_inv.reversal_move_ids.filtered(
+                        lambda m: m.state != 'cancel'
+                    )
+                    total_refunded += sum(abs(c.amount_total) for c in credits)
+                all_deposit_refunded = total_refunded >= total_deposit_amount
+            else:
+                total_deposit_amount = 0.0
+                total_refunded = 0.0
+                all_deposit_refunded = True
+
+            # Completion status
+            if all_returned and all_paid and all_deposit_refunded:
+                order.rental_completion = 'complete'
+                order.rental_completion_detail = False
+            else:
+                order.rental_completion = 'incomplete'
+                detail_parts = [
+                    _("Returned: %(returned)s/%(total)s",
+                      returned=int(total_returned), total=int(total_delivered)),
+                    _("Paid: %(paid)s/%(total)s",
+                      paid=paid_invoices, total=total_invoices),
+                ]
+                if deposit_invoices:
+                    detail_parts.append(
+                        _("Deposit refunded: %(refunded)s/%(total)s",
+                          refunded=f"{total_refunded:,.0f}",
+                          total=f"{total_deposit_amount:,.0f}")
+                    )
+                order.rental_completion_detail = '\n'.join(detail_parts)
+
+    def _get_deposit_invoices(self):
+        """Return posted out_invoices that contain deposit product lines."""
+        self.ensure_one()
+        return self.invoice_ids.filtered(
+            lambda inv: inv.state == 'posted'
+            and inv.move_type == 'out_invoice'
+            and any(l.product_id.is_rental_deposit for l in inv.invoice_line_ids)
+        )
+
+    def _recompute_rental_completion(self):
+        """Trigger recomputation of rental_completion for this recordset."""
+        self.env.add_to_compute(
+            self._fields['rental_completion'], self,
+        )
 
     #=== SEARCH METHODS ===#
 
@@ -453,24 +551,47 @@ class SaleOrder(models.Model):
     #=== INVOICING ===#
 
     def _get_invoiceable_lines(self, final=False):
-        """Filter invoiceable lines based on deposit split context."""
+        """Filter invoiceable lines based on deposit split context.
+
+        Deposit lines that already have a posted out_invoice are always excluded,
+        regardless of context. This prevents duplicate deposit invoices after a
+        deposit credit note has been issued (the credit note reduces qty_invoiced
+        back to zero, making the deposit line appear invoiceable again).
+        """
         lines = super()._get_invoiceable_lines(final=final)
+
         if self.env.context.get('_rental_exclude_deposit'):
             return lines.filtered(
                 lambda l: l.display_type or not l.product_id.is_rental_deposit
             )
+
+        # Helper: True if this deposit line was already invoiced (posted out_invoice exists)
+        def _deposit_already_invoiced(l):
+            return l.product_id.is_rental_deposit and bool(
+                l.invoice_lines.filtered(
+                    lambda il: il.move_id.state == 'posted'
+                    and il.move_id.move_type == 'out_invoice'
+                )
+            )
+
         if self.env.context.get('_rental_deposit_only'):
             return lines.filtered(
-                lambda l: l.display_type or l.product_id.is_rental_deposit
+                lambda l: (l.display_type or l.product_id.is_rental_deposit)
+                and not _deposit_already_invoiced(l)
             )
-        return lines
+
+        # Default path: exclude deposit lines that are already invoiced
+        return lines.filtered(lambda l: not _deposit_already_invoiced(l))
 
     def _create_invoices(self, grouped=False, final=False, date=None):
         """Split deposit and non-deposit lines into separate invoices."""
         if self.env.context.get('_rental_deposit_splitting'):
             return super()._create_invoices(grouped=grouped, final=final, date=date)
 
-        # Check if any SO has mixed deposit + non-deposit invoiceable lines
+        # Check if any SO has mixed deposit + non-deposit invoiceable lines.
+        # Deposit lines that already have a posted invoice are excluded from the
+        # split check (mirrors the _get_invoiceable_lines guard) to avoid an
+        # unnecessary split that would produce an empty deposit-only invoice batch.
         precision = self.env['decimal.precision'].precision_get('Product Unit')
         needs_split = False
         for order in self:
@@ -478,23 +599,57 @@ class SaleOrder(models.Model):
                 lambda l: not l.display_type
                 and not float_is_zero(l.qty_to_invoice, precision_digits=precision)
             )
-            has_deposit = any(l.product_id.is_rental_deposit for l in lines)
+            has_deposit = any(
+                l.product_id.is_rental_deposit
+                and not l.invoice_lines.filtered(
+                    lambda il: il.move_id.state == 'posted'
+                    and il.move_id.move_type == 'out_invoice'
+                )
+                for l in lines
+            )
             has_non_deposit = any(not l.product_id.is_rental_deposit for l in lines)
             if has_deposit and has_non_deposit:
                 needs_split = True
                 break
 
         if not needs_split:
-            return super()._create_invoices(grouped=grouped, final=final, date=date)
+            invoices = super()._create_invoices(grouped=grouped, final=final, date=date)
+        else:
+            ctx = {'_rental_deposit_splitting': True}
+            rental_invoices = self.with_context(
+                **ctx, _rental_exclude_deposit=True,
+            )._create_invoices(grouped=grouped, final=final, date=date)
+            deposit_invoices = self.with_context(
+                **ctx, _rental_deposit_only=True,
+            )._create_invoices(grouped=grouped, final=final, date=date)
+            invoices = rental_invoices | deposit_invoices
 
-        ctx = {'_rental_deposit_splitting': True}
-        rental_invoices = self.with_context(
-            **ctx, _rental_exclude_deposit=True,
-        )._create_invoices(grouped=grouped, final=final, date=date)
-        deposit_invoices = self.with_context(
-            **ctx, _rental_deposit_only=True,
-        )._create_invoices(grouped=grouped, final=final, date=date)
-        return rental_invoices | deposit_invoices
+        self._auto_confirm_rental_invoices(invoices)
+        return invoices
+
+    def _auto_confirm_rental_invoices(self, invoices):
+        """Auto-post invoices that originated from rental orders if the setting is enabled."""
+        company = self.env.company
+        if not company.auto_confirm_invoice:
+            return
+
+        rental_order_ids = self.filtered('is_rental_order').ids
+        if not rental_order_ids:
+            return
+
+        to_post = invoices.filtered(
+            lambda inv: inv.state == 'draft' and any(
+                line.sale_line_ids.order_id.id in rental_order_ids
+                for line in inv.invoice_line_ids
+            )
+        )
+        for invoice in to_post:
+            try:
+                invoice.action_post()
+            except Exception as e:
+                _logger.warning(
+                    "Auto-confirm failed for invoice %s: %s", invoice.name, e
+                )
 
     #=== DEPOSIT SYNC ===#
 

@@ -38,6 +38,9 @@
                     invisible="not has_rented_products or state != 'sale' or rental_status != 'return' or not is_late">Late Return</div>
                 <div class="badge rounded-pill text-bg-default float-end border-0"
                     invisible="not has_rented_products or state != 'sale' or rental_status != 'returned'">Returned</div>
+                <field name="rental_completion" widget="completion_badge"
+                    invisible="not is_rental_order or state != 'sale' or not rental_completion"
+                    class="float-end ms-1"/>
             </div>
             <field name="payment_term_id" position="after">
                 <field name="rental_return_date" invisible="1" required="has_rented_products"/>
@@ -161,6 +164,11 @@
                     decoration-success="rental_status == 'pickup'"
                     decoration-warning="rental_status == 'return'"
                     invisible="not has_rented_products"/>
+                <field
+                    name="rental_completion"
+                    widget="completion_badge"
+                    invisible="not has_rented_products or rental_status in ('draft', 'sent', 'cancel')"
+                    optional="show"/>
                 <field name="currency_id" column_invisible="True"/>
             </list>
         </field>
@@ -206,6 +214,9 @@
                 <field name="rental_status" widget="label_selection"
                     invisible="state != 'sale' or not rental_status or not has_rented_products"
                     options="{'classes': {'pickup': 'success', 'return': 'warning', 'returned': 'default'}}" class="ms-auto"/>
+                <field name="rental_completion" widget="completion_badge"
+                    invisible="state != 'sale' or not rental_completion or not has_rented_products"
+                    class="ms-1"/>
             </field>
         </field>
     </record>
@@ -252,8 +263,12 @@
                     <filter string="Pickup Date" name="filter_pickup" date="next_action_date" domain="[('rental_status', '=', 'pickup')]"/>
                     <filter string="Return Date" name="filter_return" date="next_action_date" domain="[('rental_status', '=', 'return')]"/>
                 <separator/>
+                    <filter string="Complete" name="filter_complete" domain="[('rental_completion', '=', 'complete')]"/>
+                    <filter string="Incomplete" name="filter_incomplete" domain="[('rental_completion', '=', 'incomplete')]"/>
+                <separator/>
                 <group>
                     <filter string="Status" name="groupby_status" context="{'group_by': 'rental_status'}"/>
+                    <filter string="Completion" name="groupby_completion" context="{'group_by': 'rental_completion'}"/>
                     <separator/>
                     <filter string="Salesperson" name="salesperson" context="{'group_by': 'user_id'}"/>
                     <filter string="Customer" name="customer" context="{'group_by': 'partner_id'}"/>

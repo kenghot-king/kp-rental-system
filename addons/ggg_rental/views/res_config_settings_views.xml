@@ -14,11 +14,19 @@
                      name="ggg_rental"
                      groups="sales_team.group_sale_manager">
                     <block title="Rental">
-                        <setting name="rental_location" string="Rental Location" help="Internal stock location for rented products">
+                        <setting name="rental_location" string="Rental Location" help="Internal stock locations for rental, damage, and inspection">
                             <div class="content-group">
                                 <div class="row mt16">
                                     <label for="rental_loc_id" class="col-lg-3 o_light_label"/>
                                     <field name="rental_loc_id"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="damage_loc_id" class="col-lg-3 o_light_label"/>
+                                    <field name="damage_loc_id"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="inspection_loc_id" class="col-lg-3 o_light_label"/>
+                                    <field name="inspection_loc_id"/>
                                 </div>
                             </div>
                         </setting>
@@ -81,6 +89,9 @@
                     <block title="Pickup">
                         <setting name="require_payment_before_pickup_setting" string="Require Payment Before Pickup" help="Block the pickup process until all posted customer invoices are fully paid">
                             <field name="require_payment_before_pickup"/>
+                        </setting>
+                        <setting name="auto_confirm_invoice_setting" string="Auto Confirm Invoice" help="Automatically confirm (post) invoices immediately after creation from a rental order, making them ready for payment.">
+                            <field name="auto_confirm_invoice"/>
                         </setting>
                     </block>
                     <block title="Rental Contract">

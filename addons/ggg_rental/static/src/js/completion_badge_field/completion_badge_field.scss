@@ -1,0 +1,19 @@
+.o_completion_badge {
+    cursor: pointer;
+    user-select: none;
+
+    &:focus {
+        outline: 2px solid rgba(13, 110, 253, 0.4);
+        outline-offset: 1px;
+    }
+}
+
+.o_completion_badge_popover {
+    min-width: 180px;
+    max-width: 320px;
+
+    .o_completion_badge_popover_detail {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+}

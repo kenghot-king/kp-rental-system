@@ -1,3 +1,4 @@
+from . import account_move
 from . import account_payment
 from . import product_pricelist
 from . import product_pricing

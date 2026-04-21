@@ -57,6 +57,11 @@ class ResConfigSettings(models.TransientModel):
         related='company_id.require_payment_before_pickup',
         readonly=False,
     )
+    auto_confirm_invoice = fields.Boolean(
+        string="Auto Confirm Invoice",
+        related='company_id.auto_confirm_invoice',
+        readonly=False,
+    )
     rental_contract_terms = fields.Html(
         string="Rental Contract Terms",
         related='company_id.rental_contract_terms',
@@ -67,6 +72,22 @@ class ResConfigSettings(models.TransientModel):
         help="Internal location for products currently in rental.",
         comodel_name='stock.location',
         related='company_id.rental_loc_id',
+        readonly=False,
+        domain=[('usage', '=', 'internal')],
+    )
+    damage_loc_id = fields.Many2one(
+        string="Damage Location",
+        help="Internal location for products returned in damaged condition.",
+        comodel_name='stock.location',
+        related='company_id.damage_loc_id',
+        readonly=False,
+        domain=[('usage', '=', 'internal')],
+    )
+    inspection_loc_id = fields.Many2one(
+        string="Inspection Location",
+        help="Internal location for products returned pending inspection.",
+        comodel_name='stock.location',
+        related='company_id.inspection_loc_id',
         readonly=False,
         domain=[('usage', '=', 'internal')],
     )

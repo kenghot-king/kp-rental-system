@@ -2,7 +2,7 @@ from dateutil.relativedelta import relativedelta
 from markupsafe import Markup
 
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class RentalOrderWizard(models.TransientModel):
@@ -158,7 +158,7 @@ class RentalOrderWizardLine(models.TransientModel):
 
     # Damage assessment fields (return only)
     condition = fields.Selection(
-        selection=[('good', 'Good'), ('damaged', 'Damaged')],
+        selection=[('good', 'Good'), ('damaged', 'Damaged'), ('inspect', 'Inspect')],
         string="Condition",
         default='good',
     )
@@ -212,13 +212,71 @@ class RentalOrderWizardLine(models.TransientModel):
                         _("You can't return more than what's been picked-up.")
                     )
 
+    def _get_return_dest_location(self, order_line):
+        """Resolve the destination stock location for this return wizard line.
+
+        Raises UserError if the required location is not configured.
+
+        :param sale.order.line order_line: the rental line being returned
+        :return: destination stock.location
+        """
+        company = order_line.company_id
+        condition = self.condition
+        if condition == 'damaged':
+            if not company.damage_loc_id:
+                raise UserError(_(
+                    "Damage Location is not configured. "
+                    "Please set it in Rental Settings before returning damaged products."
+                ))
+            return company.damage_loc_id
+        elif condition == 'inspect':
+            if not company.inspection_loc_id:
+                raise UserError(_(
+                    "Inspection Location is not configured. "
+                    "Please set it in Rental Settings before sending products to inspection."
+                ))
+            return company.inspection_loc_id
+        return order_line.order_id.warehouse_id.lot_stock_id
+
     def _apply(self):
         """Apply the wizard modifications to the SaleOrderLine.
+
+        For return lines, orchestrates proper stock.picking creation:
+          Phase 1 (pre-pass)  — validate destinations, create one Receipts picking per
+                                unique destination location (grouped within this call).
+          Phase 2 (main pass) — process each line; stock moves are created under the
+                                pre-created picking via context.
+          Phase 3 (post-pass) — validate each picking once all its moves are added.
 
         :return: message to log on the Sales Order.
         :rtype: str
         """
         msg = self._generate_log_message()
+
+        # --- Phase 1: pre-pass — resolve destinations and create pickings ---
+        # picking_map: {dest_location_id (int) → stock.picking}
+        picking_map = {}
+        return_lines = self.filtered(
+            lambda wl: wl.status == 'return' and wl.qty_returned > 0
+        )
+        for wizard_line in return_lines:
+            order_line = wizard_line.order_line_id
+            dest = wizard_line._get_return_dest_location(order_line)  # raises if misconfigured
+            if dest.id not in picking_map:
+                order = order_line.order_id
+                company = order_line.company_id
+                picking_map[dest.id] = self.env['stock.picking'].create({
+                    'picking_type_id': order.warehouse_id.in_type_id.id,
+                    'origin': order.name,
+                    'location_id': company.rental_loc_id.id,
+                    'location_dest_id': dest.id,
+                    'partner_id': order.partner_id.id,
+                })
+
+        # Flatten to {dest_id: picking.id} for passing via context
+        picking_map_ids = {dest_id: picking.id for dest_id, picking in picking_map.items()}
+
+        # --- Phase 2: main pass — process all wizard lines ---
         for wizard_line in self:
             order_line = wizard_line.order_line_id
             is_serial = wizard_line.tracking == 'serial'
@@ -238,8 +296,10 @@ class RentalOrderWizardLine(models.TransientModel):
                 if wizard_line.rental_order_wizard_id.is_late:
                     order_line._generate_delay_line(wizard_line.qty_returned)
 
-                # Damage assessment
-                if wizard_line.condition == 'damaged':
+                location_dest_id = wizard_line._get_return_dest_location(order_line)
+
+                # Damage/inspection fee and log (charged immediately if fee > 0)
+                if wizard_line.condition in ('damaged', 'inspect'):
                     wizard_line._process_damage(order_line)
 
                 vals = {
@@ -249,7 +309,15 @@ class RentalOrderWizardLine(models.TransientModel):
                     vals['returned_lot_ids'] = [
                         (4, lot.id) for lot in wizard_line.returned_lot_ids
                     ]
-                order_line.write(vals)
+                order_line.with_context(
+                    rental_return_dest_id=location_dest_id.id,
+                    rental_return_picking_map=picking_map_ids,
+                ).write(vals)
+
+        # --- Phase 3: post-pass — validate all return pickings ---
+        for picking in picking_map.values():
+            picking._action_done()
+
         return msg
 
     def _get_diff(self):

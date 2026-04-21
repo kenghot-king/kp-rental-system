@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ggg_rental.CompletionBadgeField">
+        <span t-if="value"
+            t-ref="badge"
+            t-att-class="'o_completion_badge badge rounded-pill ' + badgeClass"
+            role="button"
+            tabindex="0"
+            t-on-click="onClick"
+            t-on-keydown="onKeydown">
+            <t t-esc="label"/>
+        </span>
+    </t>
+
+</templates>

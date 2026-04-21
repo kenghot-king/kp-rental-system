@@ -1,7 +1,10 @@
+import logging
 from datetime import timedelta
 from pytz import UTC, timezone
 
 from odoo import _, api, fields, models
+
+_logger = logging.getLogger(__name__)
 from odoo.exceptions import UserError, ValidationError
 from odoo.fields import Command, Domain
 from odoo.tools import format_datetime, format_time
@@ -541,6 +544,9 @@ class SaleOrderLine(models.Model):
             credit_note = self.env['account.move'].sudo().create(credit_note_vals)
             credit_note.action_post()
 
+            # Trigger rental completion recompute
+            self.order_id._recompute_rental_completion()
+
             # Auto-register refund payment if enabled
             if self.company_id.deposit_auto_refund:
                 payment_register = self.env['account.payment.register'].with_context(
@@ -622,14 +628,28 @@ class SaleOrderLine(models.Model):
                 lot_ids = sol.pickedup_lot_ids if sol.product_id.tracking == 'serial' else None
                 sol._validate_rental_pickup(lot_ids=lot_ids)
 
-            # Return: create and validate a new return picking
+            # Return: create a return move under a pre-created picking (if provided)
             if sol.qty_returned > old['qty_returned']:
                 qty = sol.qty_returned - old['qty_returned']
                 if sol.product_id.tracking == 'serial':
                     lot_ids = sol.returned_lot_ids - old['returned_lot_ids']
                 else:
                     lot_ids = None
-                sol._create_rental_return(qty, lot_ids=lot_ids)
+                dest_loc_id = self.env.context.get('rental_return_dest_id')
+                location_dest_id = (
+                    self.env['stock.location'].browse(dest_loc_id)
+                    if dest_loc_id else None
+                )
+                # Look up pre-created picking from wizard's picking map
+                picking_map = self.env.context.get('rental_return_picking_map', {})
+                picking_id = picking_map.get(dest_loc_id)
+                picking = (
+                    self.env['stock.picking'].browse(picking_id)
+                    if picking_id else None
+                )
+                sol._create_rental_return(
+                    qty, lot_ids=lot_ids, location_dest_id=location_dest_id, picking=picking,
+                )
                 # Auto-create deposit credit note
                 sol._create_deposit_credit_note(qty, sol.qty_delivered)
 
@@ -674,47 +694,90 @@ class SaleOrderLine(models.Model):
             move.picked = True
         moves._action_done()
 
-    def _create_rental_return(self, qty, lot_ids=None):
-        """Create and validate a return move (Rental Location → WH/Stock).
+    def _create_rental_return(self, qty, lot_ids=None, location_dest_id=None, picking=None):
+        """Create a return move (Rental Location → destination).
 
         :param float qty: quantity to return
         :param stock.lot lot_ids: specific lots to return (for serial-tracked products)
+        :param stock.location location_dest_id: destination location (defaults to WH/Stock)
+        :param stock.picking picking: pre-created picking to attach the move to.
+            When provided the move is created under the picking but NOT validated here —
+            the caller (wizard) is responsible for calling picking._action_done() after
+            all moves are added. When None, falls back to standalone move + immediate validate.
         """
         self.ensure_one()
         rented_location = self.company_id.rental_loc_id
-        stock_location = self.order_id.warehouse_id.lot_stock_id
+        if location_dest_id is None:
+            location_dest_id = self.order_id.warehouse_id.lot_stock_id
 
-        rental_stock_move = self.env['stock.move'].create({
+        move_vals = {
             'product_id': self.product_id.id,
             'product_uom_qty': qty,
             'product_uom': self.product_id.uom_id.id,
             'location_id': rented_location.id,
-            'location_dest_id': stock_location.id,
+            'location_dest_id': location_dest_id.id,
             'partner_id': self.order_partner_id.id,
             'sale_line_id': self.id,
-        })
-        rental_stock_move._action_confirm(merge=False)
-        rental_stock_move._action_assign()
+            'origin': self.order_id.name,
+        }
 
-        if lot_ids:
-            rental_stock_move.move_line_ids.unlink()
-            for lot in lot_ids:
-                self.env['stock.move.line'].create({
-                    'move_id': rental_stock_move.id,
-                    'product_id': self.product_id.id,
-                    'product_uom_id': self.product_id.uom_id.id,
-                    'location_id': rented_location.id,
-                    'location_dest_id': stock_location.id,
-                    'lot_id': lot.id,
-                    'quantity': 1,
-                    'picked': True,
-                })
+        if picking:
+            # Attach move to pre-created picking; wizard validates after all moves added
+            move_vals['picking_id'] = picking.id
+            move_vals['picking_type_id'] = picking.picking_type_id.id
+            rental_stock_move = self.env['stock.move'].create(move_vals)
+            rental_stock_move._action_confirm(merge=False)
+            rental_stock_move._action_assign()
+
+            if lot_ids:
+                rental_stock_move.move_line_ids.unlink()
+                for lot in lot_ids:
+                    self.env['stock.move.line'].create({
+                        'move_id': rental_stock_move.id,
+                        'product_id': self.product_id.id,
+                        'product_uom_id': self.product_id.uom_id.id,
+                        'location_id': rented_location.id,
+                        'location_dest_id': location_dest_id.id,
+                        'lot_id': lot.id,
+                        'quantity': 1,
+                        'picked': True,
+                    })
+            else:
+                rental_stock_move.quantity = qty
+
+            rental_stock_move.picked = True
+            rental_stock_move.move_line_ids.picked = True
+            # Validation deferred — picking._action_done() called by wizard post-pass
         else:
-            rental_stock_move.quantity = qty
+            # Fallback: standalone move with immediate validation (backward compat)
+            _logger.warning(
+                "rental: _create_rental_return called without a picking for order %s line %s "
+                "— move will have no picking_id (traceability gap).",
+                self.order_id.name, self.id,
+            )
+            rental_stock_move = self.env['stock.move'].create(move_vals)
+            rental_stock_move._action_confirm(merge=False)
+            rental_stock_move._action_assign()
 
-        rental_stock_move.picked = True
-        rental_stock_move.move_line_ids.picked = True
-        rental_stock_move._action_done()
+            if lot_ids:
+                rental_stock_move.move_line_ids.unlink()
+                for lot in lot_ids:
+                    self.env['stock.move.line'].create({
+                        'move_id': rental_stock_move.id,
+                        'product_id': self.product_id.id,
+                        'product_uom_id': self.product_id.uom_id.id,
+                        'location_id': rented_location.id,
+                        'location_dest_id': location_dest_id.id,
+                        'lot_id': lot.id,
+                        'quantity': 1,
+                        'picked': True,
+                    })
+            else:
+                rental_stock_move.quantity = qty
+
+            rental_stock_move.picked = True
+            rental_stock_move.move_line_ids.picked = True
+            rental_stock_move._action_done()
 
     def _get_location_final(self):
         """Redirect rental lines to the Rental Location instead of Customer."""
