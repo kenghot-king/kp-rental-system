@@ -59,39 +59,25 @@ class ProductPricelist(models.Model):
             Pricing = self.env['product.pricing']
             for product in rental_products:
                 if start_date and end_date:
-                    pricing = product._get_best_pricing_rule(
+                    tmpl = product.product_tmpl_id if product._name == 'product.product' else product
+                    price = tmpl._compute_greedy_price(
                         start_date=start_date,
                         end_date=end_date,
                         pricelist=self,
                         currency=currency,
                     )
-                    duration_vals = Pricing._compute_duration_vals(
-                        start_date, end_date,
-                    )
-                    duration = (
-                        pricing
-                        and duration_vals[pricing.recurrence_id.unit or 'day']
-                        or 0
-                    )
+                    if not price:
+                        price = product.lst_price if product._name == 'product.product' else product.list_price
                 else:
                     pricing = Pricing._get_first_suitable_pricing(product, self)
-                    duration = pricing.recurrence_id.duration
+                    duration = pricing.recurrence_id.duration if pricing else 0
+                    if pricing:
+                        price = pricing._compute_price(duration, pricing.recurrence_id.unit)
+                        price = pricing.currency_id._convert(price, currency, self.env.company, date)
+                    else:
+                        price = product.lst_price if product._name == 'product.product' else product.list_price
 
-                if pricing:
-                    price = pricing._compute_price(
-                        duration, pricing.recurrence_id.unit,
-                    )
-                elif product._name == 'product.product':
-                    price = product.lst_price
-                else:
-                    price = product.list_price
-
-                results[product.id] = (
-                    pricing.currency_id._convert(
-                        price, currency, self.env.company, date,
-                    ),
-                    False,
-                )
+                results[product.id] = (price, False)
 
         price_computed_products = self.env[products._name].browse(results.keys())
         return {

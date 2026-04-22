@@ -186,6 +186,67 @@ class ProductTemplate(models.Model):
                 min_price, best_pricing_rule = price, pricing
         return best_pricing_rule
 
+    def _compute_greedy_price(self, start_date, end_date, pricelist=None, currency=None):
+        """Compute rental price by greedily decomposing duration into pricing periods.
+
+        Applies the largest period first (floor), then the smallest period last (ceil)
+        to cover any remainder. Returns the accumulated total price.
+        """
+        self.ensure_one()
+        from .product_pricing import PERIOD_RATIO
+
+        if not self.product_pricing_ids or not (start_date and end_date):
+            return 0.0
+
+        pricelist = pricelist or self.env['product.pricelist']
+        currency = currency or self.currency_id
+        company = self.env.company
+
+        available_pricings = self.env['product.pricing']._get_suitable_pricings(
+            self, pricelist=pricelist,
+        )
+        if not available_pricings:
+            return 0.0
+
+        duration_dict = self.env['product.pricing']._compute_duration_vals(start_date, end_date)
+        total_days = duration_dict['day']
+
+        # Build (period_in_days, price_per_period_in_target_currency) list
+        tiers = []
+        for pricing in available_pricings:
+            unit = pricing.recurrence_id.unit
+            duration = pricing.recurrence_id.duration or 1
+            period_in_days = duration * PERIOD_RATIO[unit] / PERIOD_RATIO['day']
+            rate = pricing.price
+            if pricing.currency_id != currency:
+                rate = pricing.currency_id._convert(
+                    from_amount=rate,
+                    to_currency=currency,
+                    company=company,
+                    date=fields.Date.today(),
+                )
+            tiers.append((period_in_days, rate))
+
+        # Sort largest period first
+        tiers.sort(key=lambda t: t[0], reverse=True)
+
+        remaining = total_days
+        total_price = 0.0
+
+        for i, (period_days, rate) in enumerate(tiers):
+            is_last = (i == len(tiers) - 1)
+            if is_last:
+                n = ceil(remaining / period_days) if remaining > 0 else 0
+            else:
+                n = int(remaining // period_days)
+            if n > 0:
+                total_price += n * rate
+                remaining -= n * period_days
+            if remaining <= 0:
+                break
+
+        return total_price
+
     def _get_contextual_price(self, product=None):
         self.ensure_one()
         if not (product or self).rent_ok:
