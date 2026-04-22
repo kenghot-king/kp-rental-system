@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Standalone Thai invoice document template ─────────────────────── -->
+    <template id="ggg_report_invoice_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="o.with_context(lang=lang)"/>
+
+            <!-- WHT detection -->
+            <t t-set="wht_lines"
+               t-value="o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount &lt; 0)"/>
+            <t t-set="wht_amount"
+               t-value="abs(sum(wht_lines.mapped('amount_currency')))"/>
+            <t t-set="net_amount" t-value="o.amount_total - wht_amount"/>
+
+            <!-- VAT / NON-VAT split -->
+            <t t-set="product_lines"
+               t-value="o.invoice_line_ids.filtered(lambda l: l.display_type == 'product')"/>
+            <t t-set="vat_lines"
+               t-value="product_lines.filtered(lambda l: any(t.amount &gt; 0 for t in l.tax_ids))"/>
+            <t t-set="non_vat_lines"
+               t-value="product_lines.filtered(lambda l: not any(t.amount &gt; 0 for t in l.tax_ids))"/>
+            <t t-set="total_for_vat"     t-value="sum(vat_lines.mapped('price_subtotal'))"/>
+            <t t-set="total_for_non_vat" t-value="sum(non_vat_lines.mapped('price_subtotal'))"/>
+
+            <div class="page">
+
+                <!-- ── TITLE ────────────────────────────────────────────── -->
+                <div style="text-align:center; margin:6px 0 10px 0;">
+                    <strong style="font-size:13pt;">
+                        ต้นฉบับ ใบแจ้งหนี้<br/>INVOICE ORIGINAL
+                    </strong>
+                </div>
+
+                <!-- ── CUSTOMER / INVOICE INFO (2-column) ───────────────── -->
+                <table width="100%" style="margin-bottom:6px; border-collapse:collapse;">
+                    <tr>
+                        <!-- Left: customer -->
+                        <td width="55%" style="vertical-align:top; padding-right:12px;">
+                            <table width="100%" style="border-collapse:collapse;">
+                                <tr>
+                                    <td width="35%" style="white-space:nowrap; padding:2px 4px 2px 0;">
+                                        <strong>Customer Name:</strong>
+                                    </td>
+                                    <td style="padding:2px 0;">
+                                        <span t-field="o.partner_id.name"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="vertical-align:top; padding:2px 4px 2px 0;">
+                                        <strong>Address:</strong>
+                                    </td>
+                                    <td style="padding:2px 0;">
+                                        <span t-field="o.partner_id"
+                                              t-options='{"widget":"contact","fields":["address"],"no_marker":true}'/>
+                                    </td>
+                                </tr>
+                                <tr><td colspan="2" style="height:6px;"></td></tr>
+                                <tr>
+                                    <td style="padding:2px 4px 2px 0;"><strong>Customer code:</strong></td>
+                                    <td style="padding:2px 0;"><span t-field="o.partner_id.ref"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:2px 4px 2px 0;"><strong>Tax Id:</strong></td>
+                                    <td style="padding:2px 0;">
+                                        <span t-field="o.partner_id.vat"/>
+                                        <t t-if="o.partner_id.l10n_th_branch_name">
+                                            &#160;<span t-field="o.partner_id.l10n_th_branch_name"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <!-- Right: invoice meta -->
+                        <td width="45%" style="vertical-align:top;">
+                            <table width="100%" style="border-collapse:collapse;">
+                                <tr>
+                                    <td width="45%" style="white-space:nowrap; padding:2px 4px 2px 0;">
+                                        <strong>No.:</strong>
+                                    </td>
+                                    <td style="padding:2px 0;"><span t-field="o.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:2px 4px 2px 0;"><strong>Date:</strong></td>
+                                    <td style="padding:2px 0;"><span t-field="o.invoice_date"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:2px 4px 2px 0;"><strong>Term of Payment:</strong></td>
+                                    <td style="padding:2px 0;"><span t-field="o.invoice_payment_term_id"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:2px 4px 2px 0;"><strong>Due Date:</strong></td>
+                                    <td style="padding:2px 0;"><span t-field="o.invoice_date_due"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:2px 4px 2px 0;"><strong>Vendor Code:</strong></td>
+                                    <td style="padding:2px 0;"></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:2px 4px 2px 0;"><strong>Currency:</strong></td>
+                                    <td style="padding:2px 0;"><span t-field="o.currency_id.name"/></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- ── LINE ITEMS TABLE ──────────────────────────────────── -->
+                <table class="table table-bordered o_main_table"
+                       style="font-size:9pt; margin-bottom:0; width:100%;">
+                    <thead>
+                        <tr style="background-color:#d8d8d8;">
+                            <th style="width:5%; text-align:center; padding:4px;">NO.</th>
+                            <th style="text-align:left; padding:4px;">DESCRIPTION</th>
+                            <th style="width:14%; text-align:center; padding:4px;">VAT CODE</th>
+                            <th style="width:16%; text-align:right; padding:4px;">AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-set="line_index" t-value="0"/>
+                        <t t-foreach="product_lines" t-as="line">
+                            <t t-set="line_index" t-value="line_index + 1"/>
+                            <tr>
+                                <td style="text-align:center; padding:3px;">
+                                    <t t-out="line_index"/>
+                                </td>
+                                <td style="padding:3px;">
+                                    <span t-field="line.name"/>
+                                </td>
+                                <td style="text-align:center; padding:3px;">
+                                    <t t-out="', '.join(line.tax_ids.mapped('tax_group_id.name'))"/>
+                                </td>
+                                <td style="text-align:right; padding:3px;">
+                                    <span t-field="line.price_subtotal"
+                                          t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
+                                </td>
+                            </tr>
+                        </t>
+                        <!-- Filler rows to ensure consistent height -->
+                        <t t-set="filler_count" t-value="max(0, 10 - line_index)"/>
+                        <t t-foreach="range(filler_count)" t-as="filler">
+                            <tr style="height:22px;">
+                                <td></td><td></td><td></td><td></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <!-- ── CHEQUE NOTE + TOTALS ──────────────────────────────── -->
+                <table width="100%" style="border-top:1px solid #999; border-collapse:collapse;">
+                    <tr>
+                        <!-- Left: cheque note -->
+                        <td width="48%" style="vertical-align:middle; padding:6px 8px; font-size:8pt; line-height:1.5;">
+                            ในกรณีชำระด้วยเช็ค โปรดสั่งจ่ายและขีดคร่อมในนามบริษัทเท่านั้น<br/>
+                            In case of cheque payment, cheque must be crossed and marked<br/>
+                            "account payee only" and issued in the name of company.
+                        </td>
+                        <!-- Right: totals -->
+                        <td width="52%" style="vertical-align:top; padding:4px 0;">
+                            <table width="100%" style="font-size:9pt; border-collapse:collapse;">
+                                <tr>
+                                    <td style="text-align:right; padding:2px 6px 2px 0;">
+                                        Total Amount For NON-VAT
+                                    </td>
+                                    <td style="text-align:right; width:35%; padding:2px 4px;">
+                                        <t t-if="total_for_non_vat">
+                                            <span t-esc="'{:,.2f}'.format(total_for_non_vat)"/>
+                                        </t>
+                                        <t t-else="">-</t>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:right; padding:2px 6px 2px 0;">
+                                        Total Amount For VAT
+                                    </td>
+                                    <td style="text-align:right; padding:2px 4px;">
+                                        <t t-if="total_for_vat">
+                                            <span t-esc="'{:,.2f}'.format(total_for_vat)"/>
+                                        </t>
+                                        <t t-else="">-</t>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:right; padding:2px 6px 2px 0;">
+                                        VAT Amount
+                                    </td>
+                                    <td style="text-align:right; padding:2px 4px;">
+                                        <t t-if="o.amount_tax">
+                                            <span t-esc="'{:,.2f}'.format(o.amount_tax)"/>
+                                        </t>
+                                        <t t-else="">-</t>
+                                    </td>
+                                </tr>
+                                <tr style="font-weight:bold;">
+                                    <td style="text-align:right; padding:2px 6px 2px 0; border-top:1px solid #333;">
+                                        Grand Total
+                                    </td>
+                                    <td style="text-align:right; padding:2px 4px; border-top:1px solid #333;">
+                                        <span t-esc="'{:,.2f}'.format(o.amount_total)"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:right; padding:2px 6px 2px 0;">
+                                        Withholding Tax
+                                    </td>
+                                    <td style="text-align:right; padding:2px 4px;">
+                                        <t t-if="wht_amount">
+                                            <span t-esc="'{:,.2f}'.format(wht_amount)"/>
+                                        </t>
+                                        <t t-else="">-</t>
+                                    </td>
+                                </tr>
+                                <tr style="font-weight:bold;">
+                                    <td style="text-align:right; padding:2px 6px 2px 0; border-top:1px solid #333;">
+                                        Net Amount
+                                    </td>
+                                    <td style="text-align:right; padding:2px 4px; border-top:1px solid #333;">
+                                        <span t-esc="'{:,.2f}'.format(net_amount)"/>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- ── AMOUNT IN THAI WORDS ──────────────────────────────── -->
+                <t t-if="o.currency_id.name == 'THB'">
+                    <div style="border-top:1px solid #333; border-bottom:1px solid #333;
+                                padding:3px 6px; font-size:9pt; margin-top:2px;">
+                        (THB) <span t-esc="o.amount_in_thai_words()"/>
+                    </div>
+                </t>
+
+                <!-- ── RECEIVED NOTE + SIGNATURES ────────────────────────── -->
+                <table width="100%" style="margin-top:12px; font-size:9pt; border-collapse:collapse;">
+                    <tr>
+                        <!-- Left: received-by -->
+                        <td width="50%" style="vertical-align:top; padding-right:16px;">
+                            <p style="margin:0 0 4px 0;">
+                                ได้รับสินค้า/ บริการตามรายการข้างบนไว้ถูกต้องในสภาพเรียบร้อย<br/>
+                                Received the above goods/ services in good condition
+                            </p>
+                            <br/><br/>
+                            <div style="border-top:1px dashed #888; width:85%;
+                                        padding-top:4px; text-align:center;">
+                                ผู้รับสินค้า / บริการ : Received by<br/>
+                                วันที่ : Date ......./......./...............
+                            </div>
+                        </td>
+                        <!-- Right: authorized signature -->
+                        <td width="50%" style="vertical-align:top; text-align:center;">
+                            <p style="margin:0 0 4px 0;">
+                                FOR <span t-field="o.company_id.name"/>
+                            </p>
+                            <br/><br/>
+                            <div style="border-top:1px dashed #888; width:85%;
+                                        margin:0 auto; padding-top:4px; text-align:center;">
+                                ผู้รับมอบอำนาจ / Authorized Signature<br/>
+                                วันที่ : Date ......./......./...............
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+
+            </div><!-- /page -->
+        </t>
+    </template>
+
+    <!-- ── Wrapper override: add our elif to the dispatch chain ─────────── -->
+    <template id="report_invoice" inherit_id="account.report_invoice">
+        <xpath expr="//t[@t-call='account.report_invoice_document']" position="after">
+            <t t-elif="o._get_name_invoice_report() == 'ggg_rental.ggg_report_invoice_document'"
+               t-call="ggg_rental.ggg_report_invoice_document"
+               t-lang="lang"/>
+        </xpath>
+    </template>
+
+</odoo>

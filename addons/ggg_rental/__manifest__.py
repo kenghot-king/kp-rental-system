@@ -33,6 +33,7 @@ Manage user and manager notifications.
         'views/account_payment_views.xml',
         'views/rental_daily_reconciliation_views.xml',
         'views/rental_invoice_report_views.xml',
+        'report/report_invoice_thai.xml',
         'report/rental_order_report_templates.xml',
         'report/rental_contract_templates.xml',
         'report/rental_report_views.xml',

@@ -1,8 +1,17 @@
+from num2words import num2words
 from odoo import models
 
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+
+    def amount_in_thai_words(self):
+        if self.currency_id.name != 'THB':
+            return ''
+        return num2words(self.amount_total, lang='th', to='currency')
+
+    def _get_name_invoice_report(self):
+        return 'ggg_rental.ggg_report_invoice_document'
 
     def write(self, vals):
         res = super().write(vals)
