@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- /shop listing card: add rental daily rate + deposit below product title -->
+    <template id="rental_products_item" inherit_id="website_sale.products_item">
+        <xpath expr="//h2[hasclass('o_wsale_products_item_title')]" position="after">
+            <t t-if="product.rent_ok and product.rental_base_daily_price">
+                <div class="rental_shop_daily_rate mt-1">
+                    <span class="fw-bold text-primary">
+                        <t t-out="product.rental_base_daily_price"
+                           t-options="{'widget': 'monetary', 'display_currency': product.rental_best_pricing_id.currency_id}"/>
+                        / Day
+                    </span>
+                    <t t-if="product.deposit_price">
+                        <div class="rental_shop_deposit text-muted small">
+                            Deposit:
+                            <t t-out="product.deposit_price"
+                               t-options="{'widget': 'monetary', 'display_currency': product.currency_id}"/>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- /shop listing card: hide Add-to-Cart for rental products -->
+    <template id="rental_shop_product_buttons" inherit_id="website_sale.shop_product_buttons">
+        <xpath expr="//t[@name='buttons_container']" position="attributes">
+            <attribute name="t-if">not product.rent_ok</attribute>
+        </xpath>
+    </template>
+
+    <!-- /shop/{product} detail page: replace price block with rental pricing for rent_ok products -->
+    <template id="rental_product_detail" inherit_id="website_sale.product">
+        <xpath expr="//div[hasclass('o_wsale_product_details_content_section_price')]//t[@t-call='website_sale.product_price']" position="replace">
+            <t t-if="product.rent_ok and product.rental_base_daily_price">
+                <div class="o_wsale_rental_pricing_block">
+
+                    <!-- Base daily rate (largest display) -->
+                    <div class="rental_base_rate mb-3">
+                        <span class="rental_base_rate_amount fw-bold">
+                            <t t-out="product.rental_base_daily_price"
+                               t-options="{'widget': 'monetary', 'display_currency': product.rental_best_pricing_id.currency_id}"/>
+                        </span>
+                        <span class="rental_base_rate_unit text-muted ms-1">/ Day</span>
+                    </div>
+
+                    <!-- Pricing tiers -->
+                    <div class="rental_pricing_tiers mb-3">
+                        <t t-foreach="product.product_pricing_ids" t-as="pricing">
+                            <t t-set="is_best" t-value="pricing.id == product.rental_best_pricing_id.id"/>
+                            <div t-attf-class="rental_tier_row d-flex align-items-center justify-content-between px-3 py-2 mb-1 #{is_best and 'rental_tier_best' or 'rental_tier_normal'}">
+                                <span class="rental_tier_price fw-bold">
+                                    <t t-out="pricing.price"
+                                       t-options="{'widget': 'monetary', 'display_currency': pricing.currency_id}"/>
+                                    / <t t-out="pricing.name"/>
+                                </span>
+                                <t t-if="is_best">
+                                    <span class="rental_tier_badge">
+                                        <t t-out="product.rental_base_daily_price"
+                                           t-options="{'widget': 'monetary', 'display_currency': pricing.currency_id}"/>
+                                        /DAY
+                                    </span>
+                                </t>
+                            </div>
+                        </t>
+                    </div>
+
+                    <!-- Deposit -->
+                    <t t-if="product.deposit_price">
+                        <div class="rental_deposit_row d-flex justify-content-between align-items-start px-3 py-2 mb-3">
+                            <span class="rental_deposit_label fw-semibold">Deposit</span>
+                            <div class="text-end">
+                                <div class="rental_deposit_amount fw-bold">
+                                    <t t-out="product.deposit_price"
+                                       t-options="{'widget': 'monetary', 'display_currency': product.currency_id}"/>
+                                </div>
+                                <small class="text-muted">(Pay on pick-up day)</small>
+                            </div>
+                        </div>
+                    </t>
+
+                </div>
+            </t>
+            <t t-else="">
+                <t t-call="website_sale.product_price"/>
+            </t>
+        </xpath>
+
+    </template>
+
+    <!-- /shop/cart: disable Proceed to Checkout when cart has rental items -->
+    <template id="rental_navigation_buttons" inherit_id="website_sale.navigation_buttons">
+        <xpath expr="//a[@name='website_sale_main_button']" position="replace">
+            <t t-set="has_rental" t-value="False"/>
+            <t t-foreach="website_sale_order.website_order_line or []" t-as="_line">
+                <t t-if="_line.product_id.rent_ok" t-set="has_rental" t-value="True"/>
+            </t>
+            <t t-if="has_rental">
+                <a role="button" class="btn btn-primary disabled w-100" aria-disabled="true">
+                    Rental items in cart — contact us to book
+                </a>
+            </t>
+            <t t-else="">
+                <a role="button" name="website_sale_main_button"
+                    t-attf-class="btn btn-primary #{not website_sale_order._is_cart_ready() and 'disabled'} w-100"
+                    t-att-href="next_website_checkout_step_href">
+                    <span t-field="next_website_checkout_step.main_button_label"/>
+                    <i class="fa fa-angle-right ms-2 fw-light"/>
+                </a>
+            </t>
+        </xpath>
+    </template>
+
+</odoo>

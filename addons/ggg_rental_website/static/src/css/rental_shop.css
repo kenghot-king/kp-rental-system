@@ -1,0 +1,65 @@
+/* Shop card: daily rate badge */
+.rental_shop_daily_rate {
+    font-size: 0.9rem;
+}
+
+/* Product detail: base daily rate */
+.rental_base_rate_amount {
+    font-size: 2rem;
+    color: #212529;
+}
+
+.rental_base_rate_unit {
+    font-size: 1.1rem;
+}
+
+/* Pricing tiers container */
+.rental_pricing_tiers {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Normal tier row */
+.rental_tier_normal {
+    background-color: #fff;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.rental_tier_normal:last-child {
+    border-bottom: none;
+}
+
+/* Best-value tier row */
+.rental_tier_best {
+    background-color: #0d6efd;
+    color: #fff;
+    border-bottom: 1px solid #0a58ca;
+}
+
+.rental_tier_best .rental_tier_price {
+    color: #fff;
+}
+
+/* Per-day badge on best tier */
+.rental_tier_badge {
+    background-color: #ffc107;
+    color: #212529;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+/* Deposit row */
+.rental_deposit_row {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.rental_deposit_amount {
+    font-size: 1.1rem;
+}
