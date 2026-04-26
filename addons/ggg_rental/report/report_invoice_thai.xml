@@ -28,7 +28,9 @@
                 <!-- ── TITLE ────────────────────────────────────────────── -->
                 <div style="text-align:center; margin:6px 0 10px 0;">
                     <strong style="font-size:13pt;">
-                        ต้นฉบับ ใบแจ้งหนี้<br/>INVOICE ORIGINAL
+                        <t t-if="o.move_type == 'out_refund'">ใบลดหนี้</t>
+                        <t t-elif="vat_lines">ใบเสร็จรับเงิน/ใบกำกับภาษี</t>
+                        <t t-else="">ใบเสร็จรับเงิน</t>
                     </strong>
                 </div>
 

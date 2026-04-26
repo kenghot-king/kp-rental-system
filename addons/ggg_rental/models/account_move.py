@@ -1,5 +1,6 @@
 from num2words import num2words
-from odoo import models
+from odoo import _, models
+from odoo.exceptions import UserError
 
 
 class AccountMove(models.Model):
@@ -11,6 +12,9 @@ class AccountMove(models.Model):
         return num2words(self.amount_total, lang='th', to='currency')
 
     def _get_name_invoice_report(self):
+        self.ensure_one()
+        if self.move_type == 'out_invoice' and self.payment_state != 'paid':
+            raise UserError(_("ไม่สามารถพิมพ์ใบเสร็จได้ เนื่องจากยังไม่ชำระเงิน"))
         return 'ggg_rental.ggg_report_invoice_document'
 
     def write(self, vals):
