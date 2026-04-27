@@ -38,6 +38,25 @@ IMPORT_TYPE_MAP = {v: k for k, v in PRODUCT_FIELD_MAP['type'].items()}
 
 class RentalCSVController(http.Controller):
 
+    def _company_env(self):
+        """Return an env with allowed_company_ids resolved from the cids cookie.
+
+        Plain HTTP controllers don't inherit allowed_company_ids from the JS
+        client the way JSON-RPC does, so company-dependent fields would resolve
+        to user.company_id instead of the UI's active company. Reading the
+        cids cookie keeps reads/writes aligned with what the user sees.
+        """
+        cids_cookie = request.httprequest.cookies.get('cids') or ''
+        company_ids = []
+        for token in cids_cookie.replace(',', '-').split('-'):
+            if token.isdigit():
+                company_ids.append(int(token))
+        if not company_ids:
+            company_ids = request.env.user.company_id.ids
+        return request.env(context=dict(
+            request.env.context, allowed_company_ids=company_ids,
+        ))
+
     def _get_recurrences(self):
         """Get all recurrence periods with en_US display names."""
         recurrences = request.env['sale.temporal.recurrence'].with_context(
@@ -61,7 +80,9 @@ class RentalCSVController(http.Controller):
             r: r.with_context(lang='en_US').duration_display for r in recurrences
         }
 
-        # Fetch up to 10 existing rental products as sample rows
+        # Fetch up to 10 existing rental products as sample rows.
+        # Use the request's native env so company-dependent fields read
+        # from whatever company the session resolves to.
         products = request.env['product.template'].search(
             [('rent_ok', '=', True)], limit=10, order='id asc'
         )
@@ -185,8 +206,8 @@ class RentalCSVController(http.Controller):
         updated = 0
         errors = []
 
-        ProductTemplate = request.env['product.template'].sudo()
-        ProductPricing = request.env['product.pricing'].sudo()
+        env = self._company_env()
+        ProductTemplate = env['product.template'].sudo()
 
         for row_num, row in enumerate(reader, start=2):
             sap_code = (row.get('sap_article_code') or '').strip()
@@ -194,43 +215,37 @@ class RentalCSVController(http.Controller):
                 errors.append(f"Row {row_num}: missing sap_article_code — skipped")
                 continue
 
-            # Find existing product
             existing = ProductTemplate.search(
                 [('sap_article_code', '=', sap_code)], limit=1
             )
 
+            if not existing and is_pricing_only:
+                errors.append(
+                    f"Row {row_num}: product '{sap_code}' not found "
+                    f"— cannot create from pricing-only template"
+                )
+                continue
+
+            # Per-row savepoint so a single bad row only rolls back itself,
+            # not earlier successful rows in the same import.
             try:
-                if existing:
-                    # Update product fields (unless pricing-only import)
-                    if not is_pricing_only:
+                with request.env.cr.savepoint():
+                    if existing:
+                        if not is_pricing_only:
+                            vals = self._prepare_product_vals(row, product_columns, warnings)
+                            if vals:
+                                existing.write(vals)
+                        self._merge_pricing(existing, row, pricing_columns)
+                        updated += 1
+                    else:
                         vals = self._prepare_product_vals(row, product_columns, warnings)
-                        if vals:
-                            existing.write(vals)
-
-                    # Merge pricing
-                    self._merge_pricing(existing, row, pricing_columns)
-                    updated += 1
-                else:
-                    if is_pricing_only:
-                        errors.append(
-                            f"Row {row_num}: product '{sap_code}' not found "
-                            f"— cannot create from pricing-only template"
-                        )
-                        continue
-
-                    vals = self._prepare_product_vals(row, product_columns, warnings)
-                    vals['sap_article_code'] = sap_code
-                    vals['rent_ok'] = True
-                    product = ProductTemplate.create(vals)
-
-                    # Create pricing
-                    self._merge_pricing(product, row, pricing_columns)
-                    created += 1
-
+                        vals['sap_article_code'] = sap_code
+                        vals['rent_ok'] = True
+                        product = ProductTemplate.create(vals)
+                        self._merge_pricing(product, row, pricing_columns)
+                        created += 1
             except Exception as e:
                 errors.append(f"Row {row_num} ({sap_code}): {str(e)}")
-                request.env.cr.rollback()
-                continue
 
         return request.make_json_response({
             'created': created,

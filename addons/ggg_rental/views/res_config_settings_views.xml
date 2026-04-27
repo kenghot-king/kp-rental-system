@@ -53,6 +53,14 @@
                                         context="{'default_type': 'service'}"
                                     />
                                 </div>
+                                <div class="row mt8">
+                                    <label string="Default Pickup Time" for="rental_pickup_time" class="col-lg-3 o_light_label"/>
+                                    <field name="rental_pickup_time" widget="float_time" class="col-lg-2"/>
+                                </div>
+                                <div class="row mt2">
+                                    <label string="Default Return Time" for="rental_return_time" class="col-lg-3 o_light_label"/>
+                                    <field name="rental_return_time" widget="float_time" class="col-lg-2"/>
+                                </div>
                             </div>
                         </setting>
                     </block>

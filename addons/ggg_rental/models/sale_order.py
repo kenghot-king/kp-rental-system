@@ -1,9 +1,10 @@
 import logging
+import pytz
 from dateutil.relativedelta import relativedelta
 from math import ceil
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.fields import Command, Domain
 from odoo.tools import float_compare, float_is_zero
 
@@ -420,11 +421,38 @@ class SaleOrder(models.Model):
 
     @api.onchange('rental_start_date')
     def _onchange_rental_start_date(self):
+        if self.rental_start_date:
+            snapped = self._snap_time_to_default(
+                self.rental_start_date, self.company_id.default_pickup_time,
+            )
+            if snapped != self.rental_start_date:
+                self.rental_start_date = snapped
         self.order_line.filtered('is_rental')._compute_name()
 
     @api.onchange('rental_return_date')
     def _onchange_rental_return_date(self):
+        if self.rental_return_date:
+            snapped = self._snap_time_to_default(
+                self.rental_return_date, self.company_id.default_return_time,
+            )
+            if snapped != self.rental_return_date:
+                self.rental_return_date = snapped
         self.order_line.filtered('is_rental')._compute_name()
+
+    def _snap_time_to_default(self, dt, default_hours):
+        """Snap dt's time component to default_hours when it equals 00:00:00 in user's TZ.
+
+        Treats a midnight time as a date-only pick from the date picker; any other
+        time is considered a deliberate user choice and returned unchanged.
+        """
+        tz = pytz.timezone(self.env.user.tz or 'UTC')
+        local = pytz.UTC.localize(dt).astimezone(tz)
+        if local.hour or local.minute or local.second:
+            return dt
+        total_minutes = round(default_hours * 60)
+        hours, minutes = divmod(total_minutes, 60)
+        snapped_local = local.replace(hour=hours, minute=minutes, second=0, microsecond=0)
+        return snapped_local.astimezone(pytz.UTC).replace(tzinfo=None)
 
     #=== ACTION METHODS ===#
 
@@ -522,11 +550,22 @@ class SaleOrder(models.Model):
         if self.rental_start_date and self.rental_return_date:
             return
 
-        start_date = fields.Datetime.now().replace(minute=0, second=0) + relativedelta(hours=1)
-        return_date = start_date + relativedelta(days=1)
+        tz = pytz.timezone(self.env.user.tz or 'UTC')
+        now_local = pytz.UTC.localize(fields.Datetime.now()).astimezone(tz)
+
+        pickup_h, pickup_m = divmod(round(self.company_id.default_pickup_time * 60), 60)
+        return_h, return_m = divmod(round(self.company_id.default_return_time * 60), 60)
+
+        start_local = now_local.replace(hour=pickup_h, minute=pickup_m, second=0, microsecond=0)
+        if start_local <= now_local:
+            start_local += relativedelta(days=1)
+        return_local = (start_local + relativedelta(days=1)).replace(
+            hour=return_h, minute=return_m, second=0, microsecond=0,
+        )
+
         self.update({
-            'rental_start_date': start_date,
-            'rental_return_date': return_date,
+            'rental_start_date': start_local.astimezone(pytz.UTC).replace(tzinfo=None),
+            'rental_return_date': return_local.astimezone(pytz.UTC).replace(tzinfo=None),
         })
 
     def _action_cancel(self):
@@ -792,10 +831,55 @@ class SaleOrder(models.Model):
 
     def action_confirm(self):
         for order in self:
+            if order.is_rental_order:
+                order.action_check_rental_availability()
             wizard = order._check_deposit_before_action('action_confirm')
             if wizard:
                 return wizard
         return super().action_confirm()
+
+    def action_check_rental_availability(self):
+        """Validate that all rental lines fit currently available stock.
+
+        Groups rental lines by product within the order, sums quantities, and
+        compares each product's order-total against the warehouse-scoped
+        free_qty. Skips service products. Raises ValidationError on the first
+        overbooked product encountered.
+        """
+        self.ensure_one()
+        if not self.is_rental_order:
+            return True
+
+        warehouse = self.warehouse_id or self.env['stock.warehouse'].search(
+            [('company_id', '=', self.company_id.id)], limit=1,
+        )
+        if not warehouse:
+            return True
+
+        qty_per_product = {}
+        for line in self.order_line:
+            if not line.is_rental or not line.product_id:
+                continue
+            if line.product_id.type == 'service':
+                continue
+            qty_per_product.setdefault(line.product_id, 0.0)
+            qty_per_product[line.product_id] += line.product_uom_qty
+
+        for product, requested_qty in qty_per_product.items():
+            available = product.with_context(warehouse_id=warehouse.id).free_qty
+            if float_compare(
+                requested_qty, available, precision_rounding=product.uom_id.rounding,
+            ) <= 0:
+                continue
+            sample_line = self.order_line.filtered(
+                lambda l, p=product: l.is_rental and l.product_id == p
+            )[:1]
+            raise ValidationError(sample_line._get_availability_error_message(
+                requested_qty=requested_qty,
+                available_qty=available,
+                warehouse=warehouse,
+            ))
+        return True
 
     def action_preview_sale_order(self):
         wizard = self._check_deposit_before_action('action_preview_sale_order')

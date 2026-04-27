@@ -4,6 +4,7 @@ import { DropdownItem } from "@web/core/dropdown/dropdown_item";
 import { registry } from "@web/core/registry";
 import { STATIC_ACTIONS_GROUP_NUMBER } from "@web/search/action_menus/action_menus";
 import { Component } from "@odoo/owl";
+import { RentalImportDialog } from "./rental_import_dialog";
 
 const cogMenuRegistry = registry.category("cogMenu");
 
@@ -40,8 +41,7 @@ class ImportProducts extends Component {
     static components = { DropdownItem };
     static props = {};
 
-    async onClick() {
-        const { RentalImportDialog } = await import("./rental_import_dialog");
+    onClick() {
         this.env.services.dialog.add(RentalImportDialog, {});
     }
 }

@@ -7,7 +7,7 @@ from odoo import _, api, fields, models
 _logger = logging.getLogger(__name__)
 from odoo.exceptions import UserError, ValidationError
 from odoo.fields import Command, Domain
-from odoo.tools import format_datetime, format_time
+from odoo.tools import float_compare, format_datetime, format_time
 from odoo.tools.sql import SQL
 
 
@@ -791,3 +791,47 @@ class SaleOrderLine(models.Model):
     def _action_launch_stock_rule(self, **kwargs):
         """Let rental lines go through normal stock rule flow for reservation."""
         super()._action_launch_stock_rule(**kwargs)
+
+    #=== AVAILABILITY ENFORCEMENT ===#
+
+    def _get_availability_error_message(self, requested_qty, available_qty, warehouse):
+        """Shared message for confirm-time error and onchange warning."""
+        return _(
+            "Cannot rent %(qty)s × %(product)s.\n\n"
+            "Requested: %(qty)s\n"
+            "Currently available in %(warehouse)s: %(available)s\n\n"
+            "Reduce the quantity to %(available)s or add more stock to proceed.",
+            qty=requested_qty,
+            product=self.product_id.display_name,
+            warehouse=warehouse.display_name if warehouse else _("the warehouse"),
+            available=available_qty,
+        )
+
+    @api.onchange('product_id', 'product_uom_qty')
+    def _onchange_check_rental_availability(self):
+        if not self.is_rental or not self.product_id:
+            return
+        if self.product_id.type == 'service':
+            return
+        if not self.product_uom_qty:
+            return
+        warehouse = self.order_id.warehouse_id or self.env['stock.warehouse'].search(
+            [('company_id', '=', self.order_id.company_id.id)], limit=1,
+        )
+        if not warehouse:
+            return
+        available = self.product_id.with_context(warehouse_id=warehouse.id).free_qty
+        if float_compare(
+            self.product_uom_qty, available, precision_rounding=self.product_id.uom_id.rounding,
+        ) <= 0:
+            return
+        return {
+            'warning': {
+                'title': _("Insufficient stock"),
+                'message': self._get_availability_error_message(
+                    requested_qty=self.product_uom_qty,
+                    available_qty=available,
+                    warehouse=warehouse,
+                ),
+            },
+        }

@@ -79,16 +79,28 @@ Required to support separate internal locations for damage and inspection.
 ## 3. Stock Locations
 
 ### 3.1 Configured Locations
-The following internal locations have been created and assigned to the company:
+The following locations have been created and assigned to the company:
+
+#### Suspend Location (parent container)
+
+| Field | Value |
+|---|---|
+| Name | `Suspend` |
+| Full Path | `Suspend` |
+| Location Type | Virtual |
+| Parent | *(none — top level)* |
+| Warehouse | *(none)* |
+
+> **Why a separate top-level parent?** Damage and Inspection units are physically held by the company but must NOT count toward "Free to Use" / bookable quantity at the warehouse scope. By parenting them under `Suspend` (outside the `WH` tree), warehouse-scoped views (Stock report, sales/rental availability, website in-stock indicator) automatically exclude them. They remain `Internal` so valuation reports still see them.
 
 #### Rental Location
 
 | Field | Value |
 |---|---|
 | Name | `Rental` |
-| Full Path | `WH/Customers/Rental` |
+| Full Path | `Customers/Rental` |
 | Location Type | Internal |
-| Parent | `WH/Customers` |
+| Parent | `Customers` |
 | Warehouse | My Company |
 | Is Valued (Internal) | Yes |
 
@@ -97,10 +109,10 @@ The following internal locations have been created and assigned to the company:
 | Field | Value |
 |---|---|
 | Name | `Damage` |
-| Full Path | `WH/Damage` |
+| Full Path | `Suspend/Damage` |
 | Location Type | Internal |
-| Parent | `WH` |
-| Warehouse | My Company |
+| Parent | `Suspend` |
+| Warehouse | *(none — outside WH)* |
 | Active | Yes |
 | Is Valued (Internal) | Yes |
 | Replenishments | No |
@@ -114,10 +126,10 @@ The following internal locations have been created and assigned to the company:
 | Field | Value |
 |---|---|
 | Name | `Inspection` |
-| Full Path | `WH/Inspection` |
+| Full Path | `Suspend/Inspection` |
 | Location Type | Internal |
-| Parent | `WH` |
-| Warehouse | My Company |
+| Parent | `Suspend` |
+| Warehouse | *(none — outside WH)* |
 | Active | Yes |
 | Is Valued (Internal) | Yes |
 | Replenishments | No |
@@ -126,11 +138,24 @@ The following internal locations have been created and assigned to the company:
 | Inventory Frequency | 0 (disabled) |
 | Created | 2026-04-17 |
 
+Resulting structure:
+
+```
+(top level)
+├── WH (Virtual)
+│   └── WH/Stock              [Internal]   ← bookable
+├── Customers
+│   └── Customers/Rental      [Internal]   ← out on rent
+└── Suspend (Virtual)
+    ├── Suspend/Damage        [Internal]   ← excluded from bookable
+    └── Suspend/Inspection    [Internal]   ← excluded from bookable
+```
+
 Verify these exist at:
 **Inventory → Configuration → Locations** (enable developer mode to see all)
 
 ### 3.2 Manual Locations (Optional)
-You may create additional sub-locations under Damage or Inspection for finer tracking (e.g., "Damage / Workshop", "Inspection / Pending Photo").
+You may create additional sub-locations under Damage or Inspection for finer tracking (e.g., "Damage / Workshop", "Inspection / Pending Photo"). Keep them under the `Suspend` tree so they inherit the same bookable-exclusion behavior.
 
 ---
 
@@ -143,11 +168,13 @@ Assign the locations to the company (already configured):
 
 | Field | Location | Path |
 |---|---|---|
-| Rental Location | Rental | `WH/Customers/Rental` |
-| Damage Location | Damage | `WH/Damage` |
-| Inspection Location | Inspection | `WH/Inspection` |
+| Rental Location | Rental | `Customers/Rental` |
+| Damage Location | Damage | `Suspend/Damage` |
+| Inspection Location | Inspection | `Suspend/Inspection` |
 
 > **Note:** Return workflow will raise an error if Damage or Inspection location is not configured when the operator selects those conditions.
+
+> **Bookable invariant:** Damage and Inspection live under the top-level `Suspend` virtual location (not under `WH`). This ensures units in those locations are excluded from "Free to Use" / availability checks at warehouse scope while remaining on the company's books for valuation. See section 3.1.
 
 ### 4.2 Delay Costs
 Default costs applied when a customer returns items late.

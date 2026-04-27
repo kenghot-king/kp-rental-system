@@ -31,6 +31,16 @@ class ResConfigSettings(models.TransientModel):
         readonly=False,
         domain=[('type', '=', 'service')],
     )
+    rental_pickup_time = fields.Float(
+        string="Default Pickup Time",
+        related='company_id.default_pickup_time',
+        readonly=False,
+    )
+    rental_return_time = fields.Float(
+        string="Default Return Time",
+        related='company_id.default_return_time',
+        readonly=False,
+    )
     damage_product = fields.Many2one(
         string="Damage Product",
         help="Service product used for damage fee charges on rental returns.",

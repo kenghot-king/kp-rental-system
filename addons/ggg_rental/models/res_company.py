@@ -11,6 +11,20 @@ class ResCompany(models.Model):
         "Minimum delay time before applying fines.", default=2,
     )
 
+    # Default Rental Period Times
+    default_pickup_time = fields.Float(
+        "Default Pickup Time", default=9.0,
+        help="Default time-of-day applied to a rental order's pickup datetime "
+             "when only a date is provided (time component equals 00:00). "
+             "Stored as hours since midnight (e.g. 9.0 = 09:00).",
+    )
+    default_return_time = fields.Float(
+        "Default Return Time", default=23.983333,
+        help="Default time-of-day applied to a rental order's return datetime "
+             "when only a date is provided (time component equals 00:00). "
+             "Stored as hours since midnight (e.g. 23.983 ≈ 23:59).",
+    )
+
     extra_product = fields.Many2one(
         'product.product',
         string="Product",

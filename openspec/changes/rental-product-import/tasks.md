@@ -31,7 +31,7 @@
 
 ## 5. Integration & Testing
 
-- [ ] 5.1 Test full flow: download template → fill data → import → verify products and pricing created
-- [ ] 5.2 Test update flow: modify CSV → re-import → verify products updated and pricing merged correctly
-- [ ] 5.3 Test edge cases: duplicate sap_article_code in CSV, empty pricing cells, unknown columns, missing required fields
+- [x] 5.1 Test full flow: download template → fill data → import → verify products and pricing created
+- [x] 5.2 Test update flow: modify CSV → re-import → verify products updated and pricing merged correctly
+- [x] 5.3 Test edge cases: duplicate sap_article_code in CSV, empty pricing cells, unknown columns, missing required fields
 - [x] 5.4 Update `__manifest__.py` with new data files and dependencies if needed
