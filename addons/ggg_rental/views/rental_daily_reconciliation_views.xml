@@ -226,19 +226,7 @@
         </field>
     </record>
 
-    <!-- ── Menus ──────────────────────────────────────────────────────────── -->
-    <menuitem id="menu_rental_reconciliation_root"
-              name="Daily Reconciliation"
-              parent="ggg_rental.rental_menu_root"
-              sequence="6"
-              groups="ggg_rental.group_rental_supervisor"/>
-
-    <menuitem id="menu_rental_reconciliation_list"
-              name="Reconciliations"
-              parent="menu_rental_reconciliation_root"
-              action="action_rental_daily_reconciliation"
-              sequence="10"
-              groups="ggg_rental.group_rental_supervisor"/>
+    <!-- Menus moved to sale_renting_menus.xml to ensure correct load order -->
 
     <menuitem id="menu_rental_reconciliation_needed"
               name="Needs Reconciliation"
