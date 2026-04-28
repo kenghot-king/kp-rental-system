@@ -228,12 +228,5 @@
 
     <!-- Menus moved to sale_renting_menus.xml to ensure correct load order -->
 
-    <menuitem id="menu_rental_reconciliation_needed"
-              name="Needs Reconciliation"
-              parent="menu_rental_reconciliation_root"
-              action="action_rental_daily_reconciliation_needed"
-              sequence="20"
-              groups="ggg_rental.group_rental_supervisor"/>
-
 
 </odoo>

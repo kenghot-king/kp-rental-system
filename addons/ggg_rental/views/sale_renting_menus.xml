@@ -87,6 +87,12 @@
                 sequence="10"
                 groups="ggg_rental.group_rental_supervisor"/>
 
+            <menuitem id="menu_rental_reconciliation_needed"
+                name="Needs Reconciliation"
+                action="action_rental_daily_reconciliation_needed"
+                sequence="20"
+                groups="ggg_rental.group_rental_supervisor"/>
+
         </menuitem>
 
         <menuitem id="menu_rental_config"
