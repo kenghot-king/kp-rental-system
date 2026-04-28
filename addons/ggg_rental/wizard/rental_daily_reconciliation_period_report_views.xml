@@ -33,11 +33,6 @@
     </record>
 
 
-    <menuitem id="menu_rental_reconciliation_period_report"
-              name="Export Period Report"
-              parent="ggg_rental.menu_rental_reconciliation_root"
-              action="action_rental_reconciliation_period_report_wizard"
-              sequence="30"
-              groups="ggg_rental.group_rental_supervisor"/>
+    <!-- Menu moved to sale_renting_menus.xml to ensure correct load order -->
 
 </odoo>

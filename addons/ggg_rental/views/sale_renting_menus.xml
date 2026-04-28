@@ -93,6 +93,12 @@
                 sequence="20"
                 groups="ggg_rental.group_rental_supervisor"/>
 
+            <menuitem id="menu_rental_reconciliation_period_report"
+                name="Export Period Report"
+                action="action_rental_reconciliation_period_report_wizard"
+                sequence="30"
+                groups="ggg_rental.group_rental_supervisor"/>
+
         </menuitem>
 
         <menuitem id="menu_rental_config"
