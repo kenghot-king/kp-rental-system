@@ -210,8 +210,9 @@ class ProductTemplate(models.Model):
 
         duration_dict = self.env['product.pricing']._compute_duration_vals(start_date, end_date)
         total_days = duration_dict['day']
+        total_hours = duration_dict['hour']
 
-        # Build (period_in_days, price_per_period_in_target_currency) list
+        # Build (period_in_days, rate) list for all tiers
         tiers = []
         for pricing in available_pricings:
             unit = pricing.recurrence_id.unit
@@ -230,6 +231,33 @@ class ProductTemplate(models.Model):
         # Sort largest period first
         tiers.sort(key=lambda t: t[0], reverse=True)
 
+        if total_days == 0:
+            # Sub-day rental: run greedy in hours using only sub-day tiers (period < 1 day).
+            # If no sub-day tiers exist, fall back to 1 unit of the smallest available tier.
+            hour_tiers = sorted(
+                [(pd * 24, rate) for pd, rate in tiers if pd < 1],
+                key=lambda t: t[0], reverse=True,
+            )
+            if hour_tiers:
+                remaining_h = total_hours
+                total_price = 0.0
+                for i, (period_h, rate) in enumerate(hour_tiers):
+                    is_last = (i == len(hour_tiers) - 1)
+                    if is_last:
+                        n = ceil(remaining_h / period_h) if remaining_h > 0 else 0
+                    else:
+                        n = int(remaining_h // period_h)
+                    if n > 0:
+                        total_price += n * rate
+                        remaining_h -= n * period_h
+                    if remaining_h <= 0:
+                        break
+            else:
+                # No sub-day tiers: 1-day minimum using the smallest available tier
+                total_price = tiers[-1][1] if tiers else 0.0
+            return total_price
+
+        # Multi-day greedy: work in days
         remaining = total_days
         total_price = 0.0
 

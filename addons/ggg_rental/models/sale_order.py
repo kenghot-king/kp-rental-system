@@ -178,9 +178,18 @@ class SaleOrder(models.Model):
         self.remaining_hours = 0
         for order in self:
             if order.rental_start_date and order.rental_return_date:
-                duration = order.rental_return_date - order.rental_start_date
-                order.duration_days = duration.days
-                order.remaining_hours = ceil(duration.seconds / 3600)
+                cal_days = (
+                    order.rental_return_date.date() - order.rental_start_date.date()
+                ).days
+                if cal_days >= 1:
+                    order.duration_days = cal_days
+                    order.remaining_hours = 0
+                else:
+                    total_seconds = (
+                        order.rental_return_date - order.rental_start_date
+                    ).total_seconds()
+                    order.duration_days = 0
+                    order.remaining_hours = ceil(total_seconds / 3600)
 
     @api.depends(
         'rental_start_date',

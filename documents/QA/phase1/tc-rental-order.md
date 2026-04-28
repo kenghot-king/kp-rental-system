@@ -39,13 +39,13 @@
 | **Expected** | System raises a validation error preventing save |
 | **Result** | |
 
-### TC-RO-004: Duration with remaining hours
+### TC-RO-004: Duration computed — calendar-day model
 
 | Field | Value |
 |-------|-------|
 | **Precondition** | Rental order in draft |
 | **Steps** | 1. Set start_date = 2026-04-10 09:00<br>2. Set return_date = 2026-04-12 14:00 |
-| **Expected** | Duration shows 2 days and 5 hours |
+| **Expected** | Duration shows **2 days** (no hours — partial day absorbed by calendar-day model) |
 | **Result** | |
 
 ---

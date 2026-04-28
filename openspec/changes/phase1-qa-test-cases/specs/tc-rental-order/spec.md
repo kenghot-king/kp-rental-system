@@ -15,9 +15,9 @@ The system SHALL allow creating a rental order with rental_start_date and rental
 - **WHEN** user sets return_date earlier than or equal to start_date
 - **THEN** system raises a validation error
 
-#### Scenario: TC-RO-004 Duration with remaining hours
+#### Scenario: TC-RO-004 Duration with end-of-day return — no remaining hours
 - **WHEN** user sets start_date=2026-04-10 09:00 and return_date=2026-04-12 14:00
-- **THEN** duration_days=2, remaining_hours=5
+- **THEN** duration_days=2, remaining_hours=0
 
 ### Requirement: Rental order status transitions
 The system SHALL transition rental_status through the correct lifecycle: draft → sent → pickup → return → returned.

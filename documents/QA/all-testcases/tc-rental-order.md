@@ -48,13 +48,13 @@
 | **Expected** | `duration_days = 2`, `remaining_hours = 0` |
 | **Result** | |
 
-### TC-RO-005: Duration computed correctly — days + hours
+### TC-RO-005: Duration computed correctly — calendar-day model (no partial-day hours)
 
 | Field | Value |
 |-------|-------|
 | **Precondition** | Rental order in draft |
 | **Steps** | 1. Set `start_date = 2026-05-01 09:00`<br>2. Set `return_date = 2026-05-03 14:00` |
-| **Expected** | `duration_days = 2`, `remaining_hours = 5` |
+| **Expected** | `duration_days = 2`, `remaining_hours = 0` (calendar-day model: partial day absorbed into day count) |
 | **Result** | |
 
 ---

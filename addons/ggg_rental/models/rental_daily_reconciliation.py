@@ -319,6 +319,12 @@ class RentalDailyReconciliationNeeded(models.Model):
         has_col = bool(self.env.cr.fetchone())
         recon_filter = "AND ap.reconciliation_id IS NULL" if has_col else ""
         self.env.cr.execute("""
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'account_payment' AND column_name = 'cashier_id'
+        """)
+        if not self.env.cr.fetchone():
+            return
+        self.env.cr.execute("""
             CREATE OR REPLACE VIEW %s AS (
                 SELECT
                     ROW_NUMBER() OVER (ORDER BY ap.cashier_id, am.date) AS id,

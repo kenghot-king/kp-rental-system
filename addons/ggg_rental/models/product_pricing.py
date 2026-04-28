@@ -122,7 +122,8 @@ class ProductPricing(models.Model):
     def _compute_duration_vals(self, start_date, end_date):
         """Compute the duration for different temporal units.
 
-        All values in the returned dictionary are rounded up.
+        Day count uses calendar-date difference (hotel model): same start/end date = 0 days.
+        Hour count is raw elapsed hours. Week/month/year derived from day/month accordingly.
 
         :param datetime start_date: beginning of the duration
         :param datetime end_date: end of the duration
@@ -130,9 +131,9 @@ class ProductPricing(models.Model):
         :rtype: dict
         """
         duration = end_date - start_date
-        vals = dict(hour=(duration.days * 24 + duration.seconds / 3600))
-        vals['day'] = math.ceil(vals['hour'] / 24)
-        vals['week'] = math.ceil(vals['day'] / 7)
+        vals = dict(hour=duration.total_seconds() / 3600)
+        vals['day'] = (end_date.date() - start_date.date()).days
+        vals['week'] = math.ceil(vals['day'] / 7) if vals['day'] > 0 else 0
         duration_diff = relativedelta(end_date, start_date)
         months = 1 if duration_diff.days or duration_diff.hours or duration_diff.minutes else 0
         months += duration_diff.months
