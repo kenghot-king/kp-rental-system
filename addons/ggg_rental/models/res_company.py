@@ -132,8 +132,12 @@ class ResCompany(models.Model):
             company.rental_loc_id = company_rental_loc.get(company.id, False)
 
     def _create_rental_support_locations(self):
-        """Create Damage and Inspection locations for companies missing them."""
-        parent_loc = self.env.ref('stock.stock_location_locations')
+        """Create Damage and Inspection locations for companies missing them.
+
+        Created as top-level locations (no parent) so they are outside the
+        warehouse tree and excluded from bookable stock counts.
+        stock.stock_location_locations was removed in Odoo 19.
+        """
         damage_vals = []
         inspection_vals = []
         for company in self.sudo():
@@ -142,14 +146,12 @@ class ResCompany(models.Model):
                     "name": self.env._("Damage"),
                     "usage": "internal",
                     "company_id": company.id,
-                    "location_id": parent_loc.id,
                 })
             if not company.inspection_loc_id:
                 inspection_vals.append({
                     "name": self.env._("Inspection"),
                     "usage": "internal",
                     "company_id": company.id,
-                    "location_id": parent_loc.id,
                 })
         if damage_vals:
             damage_locs = self.env['stock.location'].sudo().create(damage_vals)
