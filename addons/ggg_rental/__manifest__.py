@@ -30,6 +30,7 @@ Manage user and manager notifications.
         'views/rental_damage_log_views.xml',
         'views/stock_lot_views.xml',
         'views/account_journal_views.xml',
+        'views/sale_renting_menus.xml',
         'views/account_payment_views.xml',
         'views/rental_daily_reconciliation_views.xml',
         'views/rental_invoice_report_views.xml',
@@ -43,7 +44,6 @@ Manage user and manager notifications.
         'wizard/rental_deposit_sync_views.xml',
         'wizard/rental_processing_views.xml',
         'wizard/rental_daily_reconciliation_period_report_views.xml',
-        'views/sale_renting_menus.xml',
     ],
     'demo': [
         'data/rental_demo.xml',
