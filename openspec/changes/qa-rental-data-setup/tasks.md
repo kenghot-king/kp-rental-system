@@ -29,9 +29,9 @@
 
 ## 6. Verification
 
-- [ ] 6.1 Assign `group_qa_tester` to a test user; confirm QA menu is visible only to that user
-- [ ] 6.2 Create a confirmed rental order (rental_status=pickup), apply a Late Pickup scenario (days=2), verify `is_late=True` and log entry created
-- [ ] 6.3 Apply a Late Return scenario to an order with rental_status=return, verify `is_late=True`
-- [ ] 6.4 Test all safety check paths: wrong status, already late, non-rental order — verify skipped with correct reason in warning
-- [ ] 6.5 Revert the scenario, verify original dates restored and `is_late=False`
-- [ ] 6.6 Verify re-applying an applied scenario raises UserError
+- [x] 6.1 Assign `group_qa_tester` to a test user; confirm QA menu is visible only to that user
+- [x] 6.2 Create a confirmed rental order (rental_status=pickup), apply a Late Pickup scenario (days=2), verify `is_late=True` and log entry created
+- [x] 6.3 Apply a Late Return scenario to an order with rental_status=return, verify `is_late=True`
+- [x] 6.4 Test all safety check paths: wrong status, already late, non-rental order — verify skipped with correct reason in warning
+- [x] 6.5 Revert the scenario, verify original dates restored and `is_late=False`
+- [x] 6.6 Verify re-applying an applied scenario raises UserError

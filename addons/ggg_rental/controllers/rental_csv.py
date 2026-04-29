@@ -5,6 +5,8 @@ from odoo import http
 from odoo.http import request, content_disposition
 
 
+SERIAL_FIELDS = ['sap_article_code', 'serial_number']
+
 PRODUCT_FIELDS = [
     'sap_article_code',
     'name',
@@ -159,6 +161,151 @@ class RentalCSVController(http.Controller):
                 ('Content-Disposition', content_disposition('rental_pricing_template.csv')),
             ],
         )
+
+    @http.route('/ggg_rental/download_serial_template', type='http', auth='user')
+    def download_serial_template(self):
+        example = {'sap_article_code': 'FORK-001', 'serial_number': 'SN-2026-001'}
+
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=SERIAL_FIELDS)
+        writer.writeheader()
+        writer.writerow(example)
+
+        content = output.getvalue().encode('utf-8-sig')
+        return request.make_response(
+            content,
+            headers=[
+                ('Content-Type', 'text/csv; charset=utf-8'),
+                ('Content-Disposition', content_disposition('rental_serial_template.csv')),
+            ],
+        )
+
+    @http.route('/ggg_rental/import_serials', type='http', auth='user',
+                methods=['POST'], csrf=False)
+    def import_serials(self, file=None, **kwargs):
+        if not file:
+            return request.make_json_response({'error': 'No file uploaded'}, status=400)
+
+        try:
+            content = file.read().decode('utf-8-sig')
+        except UnicodeDecodeError:
+            content = file.read().decode('latin-1')
+
+        env = self._company_env()
+        company = env.user.company_id
+
+        # Resolve destination: active company's default warehouse lot_stock_id
+        warehouse = env['stock.warehouse'].sudo().search(
+            [('company_id', '=', company.id)], limit=1
+        )
+        if not warehouse or not warehouse.lot_stock_id:
+            return request.make_json_response(
+                {'error': 'No default warehouse with stock location found. '
+                          'Configure a warehouse with lot_stock_id before importing serials.'},
+                status=400,
+            )
+        location = warehouse.lot_stock_id
+
+        reader = csv.DictReader(io.StringIO(content))
+        if not reader.fieldnames:
+            return request.make_json_response(
+                {'error': 'Empty or invalid CSV file'}, status=400
+            )
+
+        missing = [f for f in SERIAL_FIELDS if f not in reader.fieldnames]
+        if missing:
+            return request.make_json_response(
+                {'error': f"Missing required columns: {', '.join(missing)}"},
+                status=400,
+            )
+
+        Lot = env['stock.lot'].sudo()
+        Quant = env['stock.quant'].sudo()
+        ProductTemplate = env['product.template'].sudo()
+
+        created = 0
+        skipped = 0
+        warnings = []
+        row_errors = []
+        seen_in_csv = set()  # (product_id, serial_number) already processed this run
+
+        for row_num, row in enumerate(reader, start=2):
+            sap_code = (row.get('sap_article_code') or '').strip()
+            serial = (row.get('serial_number') or '').strip()
+
+            if not sap_code or not serial:
+                row_errors.append(f"Row {row_num}: missing sap_article_code or serial_number — skipped")
+                continue
+
+            # Product validation state machine
+            tmpl = ProductTemplate.search([('sap_article_code', '=', sap_code)], limit=1)
+            if not tmpl:
+                row_errors.append(f"Row {row_num}: SAP code '{sap_code}' not found")
+                continue
+            if not tmpl.rent_ok:
+                row_errors.append(f"Row {row_num}: product '{tmpl.name}' is not a rental product")
+                continue
+            if not tmpl.is_storable:
+                row_errors.append(f"Row {row_num}: product '{tmpl.name}' is not storable")
+                continue
+            if tmpl.tracking != 'serial':
+                row_errors.append(f"Row {row_num}: product '{tmpl.name}' is not serial-tracked")
+                continue
+            variants = tmpl.product_variant_ids
+            if len(variants) != 1:
+                row_errors.append(
+                    f"Row {row_num}: product '{tmpl.name}' has {len(variants)} variants — "
+                    f"cannot determine which variant; use a single-variant product"
+                )
+                continue
+            product = variants[0]
+
+            # Duplicate detection: in-CSV and pre-existing
+            csv_key = (product.id, serial)
+            if csv_key in seen_in_csv:
+                warnings.append(
+                    f"Row {row_num}: serial '{serial}' duplicated in CSV for {sap_code} — skipped"
+                )
+                skipped += 1
+                continue
+            seen_in_csv.add(csv_key)
+
+            existing_lot = Lot.search(
+                [('product_id', '=', product.id), ('name', '=', serial)], limit=1
+            )
+            if existing_lot:
+                warnings.append(
+                    f"Row {row_num}: serial '{serial}' already exists for {sap_code} — skipped"
+                )
+                skipped += 1
+                continue
+
+            # Create lot + quant with inventory adjustment
+            try:
+                with env.cr.savepoint():
+                    lot = Lot.create({
+                        'name': serial,
+                        'product_id': product.id,
+                        'company_id': company.id,
+                    })
+                    quant = Quant.with_context(inventory_mode=True).create({
+                        'product_id': product.id,
+                        'location_id': location.id,
+                        'lot_id': lot.id,
+                        'inventory_quantity': 1.0,
+                    })
+                    quant._apply_inventory()
+                    created += 1
+            except Exception as e:
+                row_errors.append(f"Row {row_num} ({sap_code} / {serial}): {str(e)}")
+
+        return request.make_json_response({
+            'created': created,
+            'skipped': skipped,
+            'errors': len(row_errors),
+            'warnings': warnings,
+            'row_errors': row_errors,
+        })
 
     @http.route('/ggg_rental/import_products', type='http', auth='user',
                 methods=['POST'], csrf=False)

@@ -281,6 +281,47 @@ Add rental pricing periods on the product's Rental tab:
 
 ---
 
+## 6.4 Before Importing Serials
+
+After product master data is set up, use the **Import Serials** button on the Rental Products list to bulk-load serial numbers (one per physical unit) into stock.
+
+### Prerequisites
+
+**Set `Cost Price` (standard_price) on every rental product before importing.**
+
+When a serial is imported, Odoo runs a standard inventory adjustment (`_apply_inventory()`), which books the unit to *Stock Valuation* and credits the *Inventory Adjustment* account at the product's current `standard_price`. If `standard_price = 0` at import time, the serial and quant are still created but no valuation entry is posted — re-running the import later will not fix the valuation of already-created quants.
+
+> **Path to set cost:** Rental → Products → [Product] → Purchase tab → Cost
+
+### Import Format
+
+Download the template via **Rental → Products → ⚙ → Download Serial Template**. Fill in one row per physical unit:
+
+| Column | Description |
+|---|---|
+| `sap_article_code` | Must match the product's SAP Article Code exactly |
+| `serial_number` | Unique serial identifier for the unit |
+
+### Import Behavior
+
+- Each serial lands at **WH/Stock** (the active company's default warehouse `lot_stock_id`) with `quantity = 1.0`
+- Duplicate serials (already in DB or repeated in the same CSV) are **warned and skipped** — the import does not abort
+- Products that are not rental, not storable, not serial-tracked, or have multiple variants are rejected per row with a clear error message
+- The import is **additive only** — existing serials are never modified or deleted
+
+### One-Time Accountant Journal Entry
+
+Since Odoo is now the system of record for fleet valuation, the accountant should record a one-time journal entry to retire any prior fleet asset row from the legacy accounting system:
+
+| Account | Debit | Credit | Memo |
+|---|---|---|---|
+| Fleet Asset (old system) | — | Total fleet cost | Transfer fleet to Odoo |
+| Inventory Adjustment | Total fleet cost | — | Fleet import via serial CSV |
+
+> This offsets the credit that Odoo's `_apply_inventory()` posted to the Inventory Adjustment account, and closes out the fleet asset in the prior system. Coordinate with the accountant on the exact accounts and amounts before posting.
+
+---
+
 ## 7. Warehouse Configuration
 
 Verify the default warehouse has a stock location (`lot_stock_id`) configured. This is the destination used when items are returned in **Good** condition.
@@ -333,6 +374,7 @@ Assign users to the appropriate group:
 - [ ] Deposit Product configured in Rental Settings → Deposit
 - [ ] Extra Time Product configured in Rental Settings → Delay Costs
 - [ ] At least one rentable product created with pricing rules
+- [ ] Standard price (`Cost Price`) set on all rental products before importing serials
 - [ ] Default warehouse has `lot_stock_id` configured
 - [ ] Users assigned to correct sales group
 

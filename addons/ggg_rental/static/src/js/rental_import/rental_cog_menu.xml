@@ -19,4 +19,16 @@
         </DropdownItem>
     </t>
 
+    <t t-name="ggg_rental.DownloadSerialTemplate">
+        <DropdownItem onSelected.bind="onClick">
+            <i class="fa fa-fw fa-download me-1"/>Download Serial Template
+        </DropdownItem>
+    </t>
+
+    <t t-name="ggg_rental.ImportSerials">
+        <DropdownItem onSelected.bind="onClick">
+            <i class="fa fa-fw fa-upload me-1"/>Import Serials (CSV)
+        </DropdownItem>
+    </t>
+
 </templates>

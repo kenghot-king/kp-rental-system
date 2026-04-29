@@ -5,6 +5,7 @@ import { registry } from "@web/core/registry";
 import { STATIC_ACTIONS_GROUP_NUMBER } from "@web/search/action_menus/action_menus";
 import { Component } from "@odoo/owl";
 import { RentalImportDialog } from "./rental_import_dialog";
+import { RentalSerialImportDialog } from "./rental_serial_import_dialog";
 
 const cogMenuRegistry = registry.category("cogMenu");
 
@@ -73,3 +74,39 @@ cogMenuRegistry.add("rental-import-products", {
     groupNumber: STATIC_ACTIONS_GROUP_NUMBER,
     isDisplayed: (env) => isRentalProductView(env),
 }, { sequence: 22 });
+
+class DownloadSerialTemplate extends Component {
+    static template = "ggg_rental.DownloadSerialTemplate";
+    static components = { DropdownItem };
+    static props = {};
+
+    onClick() {
+        this.env.services.action.doAction({
+            type: "ir.actions.act_url",
+            url: "/ggg_rental/download_serial_template",
+            target: "self",
+        });
+    }
+}
+
+class ImportSerials extends Component {
+    static template = "ggg_rental.ImportSerials";
+    static components = { DropdownItem };
+    static props = {};
+
+    onClick() {
+        this.env.services.dialog.add(RentalSerialImportDialog, {});
+    }
+}
+
+cogMenuRegistry.add("rental-download-serial-template", {
+    Component: DownloadSerialTemplate,
+    groupNumber: STATIC_ACTIONS_GROUP_NUMBER,
+    isDisplayed: (env) => isRentalProductView(env),
+}, { sequence: 23 });
+
+cogMenuRegistry.add("rental-import-serials", {
+    Component: ImportSerials,
+    groupNumber: STATIC_ACTIONS_GROUP_NUMBER,
+    isDisplayed: (env) => isRentalProductView(env),
+}, { sequence: 24 });
