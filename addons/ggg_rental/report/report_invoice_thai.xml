@@ -23,6 +23,15 @@
             <t t-set="total_for_vat"     t-value="sum(vat_lines.mapped('price_subtotal'))"/>
             <t t-set="total_for_non_vat" t-value="sum(non_vat_lines.mapped('price_subtotal'))"/>
 
+            <style>
+                .ggg-invoice-header, .ggg-invoice-header *, .ggg-invoice-header table,
+                .ggg-invoice-header tr, .ggg-invoice-header td, .ggg-invoice-header th {
+                    border: none !important;
+                    border-width: 0 !important;
+                    outline: none !important;
+                }
+            </style>
+
             <div class="page">
 
                 <!-- ── TITLE ────────────────────────────────────────────── -->
@@ -35,36 +44,37 @@
                 </div>
 
                 <!-- ── CUSTOMER / INVOICE INFO (2-column) ───────────────── -->
-                <table width="100%" style="margin-bottom:6px; border-collapse:collapse;">
+                <div class="ggg-invoice-header" style="margin-bottom:6px;">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse; border:none; border-width:0;">
                     <tr>
                         <!-- Left: customer -->
-                        <td width="55%" style="vertical-align:top; padding-right:12px;">
-                            <table width="100%" style="border-collapse:collapse;">
+                        <td width="55%" style="vertical-align:top; padding-right:12px; border:none; border-width:0;">
+                            <table width="100%" border="0" cellspacing="0" style="border-collapse:collapse; border:none; border-width:0;">
                                 <tr>
-                                    <td width="35%" style="white-space:nowrap; padding:2px 4px 2px 0;">
+                                    <td width="35%" style="white-space:nowrap; padding:2px 4px 2px 0; border:none; border-width:0;">
                                         <strong>Customer Name:</strong>
                                     </td>
-                                    <td style="padding:2px 0;">
+                                    <td style="padding:2px 0; border:none; border-width:0;">
                                         <span t-field="o.partner_id.name"/>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="vertical-align:top; padding:2px 4px 2px 0;">
+                                    <td style="vertical-align:top; padding:2px 4px 2px 0; border:none; border-width:0;">
                                         <strong>Address:</strong>
                                     </td>
-                                    <td style="padding:2px 0;">
+                                    <td style="padding:2px 0; border:none; border-width:0;">
                                         <span t-field="o.partner_id"
                                               t-options='{"widget":"contact","fields":["address"],"no_marker":true}'/>
                                     </td>
                                 </tr>
-                                <tr><td colspan="2" style="height:6px;"></td></tr>
+                                <tr><td colspan="2" style="height:6px; border:none; border-width:0;"></td></tr>
                                 <tr>
-                                    <td style="padding:2px 4px 2px 0;"><strong>Customer code:</strong></td>
-                                    <td style="padding:2px 0;"><span t-field="o.partner_id.ref"/></td>
+                                    <td style="padding:2px 4px 2px 0; border:none; border-width:0;"><strong>Customer code:</strong></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;"><span t-field="o.partner_id.ref"/></td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:2px 4px 2px 0;"><strong>Tax Id:</strong></td>
-                                    <td style="padding:2px 0;">
+                                    <td style="padding:2px 4px 2px 0; border:none; border-width:0;"><strong>Tax Id:</strong></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;">
                                         <span t-field="o.partner_id.vat"/>
                                         <t t-if="o.partner_id.l10n_th_branch_name">
                                             &#160;<span t-field="o.partner_id.l10n_th_branch_name"/>
@@ -74,38 +84,39 @@
                             </table>
                         </td>
                         <!-- Right: invoice meta -->
-                        <td width="45%" style="vertical-align:top;">
-                            <table width="100%" style="border-collapse:collapse;">
+                        <td width="45%" style="vertical-align:top; border:none; border-width:0;">
+                            <table width="100%" border="0" cellspacing="0" style="border-collapse:collapse; border:none; border-width:0;">
                                 <tr>
-                                    <td width="45%" style="white-space:nowrap; padding:2px 4px 2px 0;">
+                                    <td width="45%" style="white-space:nowrap; padding:2px 4px 2px 0; border:none; border-width:0;">
                                         <strong>No.:</strong>
                                     </td>
-                                    <td style="padding:2px 0;"><span t-field="o.name"/></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;"><span t-field="o.name"/></td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:2px 4px 2px 0;"><strong>Date:</strong></td>
-                                    <td style="padding:2px 0;"><span t-field="o.invoice_date"/></td>
+                                    <td style="padding:2px 4px 2px 0; border:none; border-width:0;"><strong>Date:</strong></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;"><span t-field="o.invoice_date" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/></td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:2px 4px 2px 0;"><strong>Term of Payment:</strong></td>
-                                    <td style="padding:2px 0;"><span t-field="o.invoice_payment_term_id"/></td>
+                                    <td style="padding:2px 4px 2px 0; border:none; border-width:0;"><strong>Term of Payment:</strong></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;"><span t-field="o.invoice_payment_term_id"/></td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:2px 4px 2px 0;"><strong>Due Date:</strong></td>
-                                    <td style="padding:2px 0;"><span t-field="o.invoice_date_due"/></td>
+                                    <td style="padding:2px 4px 2px 0; border:none; border-width:0;"><strong>Due Date:</strong></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;"><span t-field="o.invoice_date_due" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/></td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:2px 4px 2px 0;"><strong>Vendor Code:</strong></td>
-                                    <td style="padding:2px 0;"></td>
+                                    <td style="padding:2px 4px 2px 0; border:none; border-width:0;"><strong>Vendor Code:</strong></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;"></td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:2px 4px 2px 0;"><strong>Currency:</strong></td>
-                                    <td style="padding:2px 0;"><span t-field="o.currency_id.name"/></td>
+                                    <td style="padding:2px 4px 2px 0; border:none; border-width:0;"><strong>Currency:</strong></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;"><span t-field="o.currency_id.name"/></td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
                 </table>
+                </div>
 
                 <!-- ── LINE ITEMS TABLE ──────────────────────────────────── -->
                 <table class="table table-bordered o_main_table"
@@ -149,22 +160,22 @@
                 </table>
 
                 <!-- ── CHEQUE NOTE + TOTALS ──────────────────────────────── -->
-                <table width="100%" style="border-top:1px solid #999; border-collapse:collapse;">
+                <table width="100%" style="border-top:1px solid #999; border-collapse:collapse; border:none;">
                     <tr>
                         <!-- Left: cheque note -->
-                        <td width="48%" style="vertical-align:middle; padding:6px 8px; font-size:8pt; line-height:1.5;">
+                        <td width="48%" style="vertical-align:middle; padding:6px 8px; font-size:8pt; line-height:1.5; border:none;">
                             ในกรณีชำระด้วยเช็ค โปรดสั่งจ่ายและขีดคร่อมในนามบริษัทเท่านั้น<br/>
                             In case of cheque payment, cheque must be crossed and marked<br/>
                             "account payee only" and issued in the name of company.
                         </td>
                         <!-- Right: totals -->
-                        <td width="52%" style="vertical-align:top; padding:4px 0;">
-                            <table width="100%" style="font-size:9pt; border-collapse:collapse;">
+                        <td width="52%" style="vertical-align:top; padding:4px 0; border:none;">
+                            <table width="100%" style="font-size:9pt; border-collapse:collapse; border:none;">
                                 <tr>
-                                    <td style="text-align:right; padding:2px 6px 2px 0;">
+                                    <td style="text-align:right; padding:2px 6px 2px 0; border:none;">
                                         Total Amount For NON-VAT
                                     </td>
-                                    <td style="text-align:right; width:35%; padding:2px 4px;">
+                                    <td style="text-align:right; width:35%; padding:2px 4px; border:none;">
                                         <t t-if="total_for_non_vat">
                                             <span t-esc="'{:,.2f}'.format(total_for_non_vat)"/>
                                         </t>
@@ -172,10 +183,10 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="text-align:right; padding:2px 6px 2px 0;">
+                                    <td style="text-align:right; padding:2px 6px 2px 0; border:none;">
                                         Total Amount For VAT
                                     </td>
-                                    <td style="text-align:right; padding:2px 4px;">
+                                    <td style="text-align:right; padding:2px 4px; border:none;">
                                         <t t-if="total_for_vat">
                                             <span t-esc="'{:,.2f}'.format(total_for_vat)"/>
                                         </t>
@@ -183,10 +194,10 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="text-align:right; padding:2px 6px 2px 0;">
+                                    <td style="text-align:right; padding:2px 6px 2px 0; border:none;">
                                         VAT Amount
                                     </td>
-                                    <td style="text-align:right; padding:2px 4px;">
+                                    <td style="text-align:right; padding:2px 4px; border:none;">
                                         <t t-if="o.amount_tax">
                                             <span t-esc="'{:,.2f}'.format(o.amount_tax)"/>
                                         </t>
@@ -194,18 +205,18 @@
                                     </td>
                                 </tr>
                                 <tr style="font-weight:bold;">
-                                    <td style="text-align:right; padding:2px 6px 2px 0; border-top:1px solid #333;">
+                                    <td style="text-align:right; padding:2px 6px 2px 0; border:none; border-top:1px solid #333;">
                                         Grand Total
                                     </td>
-                                    <td style="text-align:right; padding:2px 4px; border-top:1px solid #333;">
+                                    <td style="text-align:right; padding:2px 4px; border:none; border-top:1px solid #333;">
                                         <span t-esc="'{:,.2f}'.format(o.amount_total)"/>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="text-align:right; padding:2px 6px 2px 0;">
+                                    <td style="text-align:right; padding:2px 6px 2px 0; border:none;">
                                         Withholding Tax
                                     </td>
-                                    <td style="text-align:right; padding:2px 4px;">
+                                    <td style="text-align:right; padding:2px 4px; border:none;">
                                         <t t-if="wht_amount">
                                             <span t-esc="'{:,.2f}'.format(wht_amount)"/>
                                         </t>
@@ -213,10 +224,10 @@
                                     </td>
                                 </tr>
                                 <tr style="font-weight:bold;">
-                                    <td style="text-align:right; padding:2px 6px 2px 0; border-top:1px solid #333;">
+                                    <td style="text-align:right; padding:2px 6px 2px 0; border:none; border-top:1px solid #333;">
                                         Net Amount
                                     </td>
-                                    <td style="text-align:right; padding:2px 4px; border-top:1px solid #333;">
+                                    <td style="text-align:right; padding:2px 4px; border:none; border-top:1px solid #333;">
                                         <span t-esc="'{:,.2f}'.format(net_amount)"/>
                                     </td>
                                 </tr>

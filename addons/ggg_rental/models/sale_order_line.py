@@ -276,10 +276,10 @@ class SaleOrderLine(models.Model):
             and start_date.replace(tzinfo=UTC).astimezone(timezone(tz)).date()
                 == return_date.replace(tzinfo=UTC).astimezone(timezone(tz)).date()
         ):
-            return_date_part = format_time(env, return_date, tz=tz, time_format='short')
+            return_date_part = format_time(env, return_date, tz=tz, time_format='HH:mm')
         else:
-            return_date_part = format_datetime(env, return_date, tz=tz, dt_format='short')
-        start_date_part = format_datetime(env, start_date, tz=tz, dt_format='short')
+            return_date_part = format_datetime(env, return_date, tz=tz, dt_format='dd/MM/yyyy, HH:mm')
+        start_date_part = format_datetime(env, start_date, tz=tz, dt_format='dd/MM/yyyy, HH:mm')
         return _(
             "\n%(from_date)s to %(to_date)s",
             from_date=start_date_part,

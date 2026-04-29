@@ -50,8 +50,8 @@
                     <tbody class="sale_tbody" t-if="doc.is_rental_order">
                         <tr t-foreach="doc.order_line.filtered('qty_delivered')" t-as="line">
                             <td><span t-field="line.product_id.name">Product A</span></td>
-                            <td class="text-start"><span t-field="line.start_date">2023-08-01</span></td>
-                            <td class="text-start"><span t-field="line.return_date">2023-08-10</span></td>
+                            <td class="text-start"><span t-field="line.start_date" t-options='{"widget": "datetime", "format": "dd/MM/yyyy HH:mm"}'>2023-08-01</span></td>
+                            <td class="text-start"><span t-field="line.return_date" t-options='{"widget": "datetime", "format": "dd/MM/yyyy HH:mm"}'>2023-08-10</span></td>
                             <td class="text-end"><span t-field="line.qty_delivered">5</span></td>
                             <td class="text-end"><span t-field="line.qty_returned">2</span></td>
                         </tr>
@@ -68,4 +68,12 @@
             </t>
         </t>
     </template>
+
+    <!-- Suppress T&C note block from sale quotation PDF -->
+    <template id="report_saleorder_no_tc" inherit_id="sale.report_saleorder_document">
+        <xpath expr="//span[@name='order_note']" position="replace">
+            <t/>
+        </xpath>
+    </template>
+
 </odoo>

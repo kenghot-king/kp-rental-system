@@ -21,6 +21,9 @@
                 body, div, p, span, td, th, li, h1, h2, h3, h4, h5, h6, strong, small, b {
                     font-family: 'Sarabun', sans-serif !important;
                 }
+                @page {
+                    margin-top: 55mm;
+                }
             </style>
 
             <!-- Pre-compute filtered line sets -->
@@ -36,25 +39,27 @@
                     </div>
                     <div class="col-4 text-end">
                         <div><strong>เลขที่อ้างอิง: </strong><span t-field="doc.name"/></div>
-                        <div><strong>วันที่: </strong><span t-field="doc.date_order" t-options='{"widget": "date"}'/></div>
+                        <div><strong>วันที่: </strong><span t-field="doc.rental_start_date" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/></div>
                     </div>
                 </div>
 
                 <!-- Parties -->
-                <div class="row mb-4">
-                    <div class="col-6">
-                        <div class="border rounded p-3 h-100">
-                            <p class="text-muted text-uppercase fw-bold small mb-2">ผู้ให้เช่า</p>
-                            <div t-field="doc.company_id.partner_id" t-options='{"widget": "contact", "fields": ["name", "address", "phone", "email"], "no_marker": True}'/>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="border rounded p-3 h-100">
-                            <p class="text-muted text-uppercase fw-bold small mb-2">ผู้เช่า</p>
-                            <div t-field="doc.partner_id" t-options='{"widget": "contact", "fields": ["name", "address", "phone", "email"], "no_marker": True}'/>
-                        </div>
-                    </div>
-                </div>
+                <table width="100%" style="margin-bottom: 1.5rem; border-collapse: collapse;">
+                    <tr>
+                        <td width="50%" style="vertical-align: top; padding-right: 8px;">
+                            <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem;">
+                                <p style="color: #6c757d; text-transform: uppercase; font-weight: bold; font-size: 0.75rem; margin-bottom: 0.5rem;">ผู้ให้เช่า</p>
+                                <div t-field="doc.company_id.partner_id" t-options='{"widget": "contact", "fields": ["name", "address", "phone", "email"], "no_marker": True}'/>
+                            </div>
+                        </td>
+                        <td width="50%" style="vertical-align: top; padding-left: 8px;">
+                            <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem;">
+                                <p style="color: #6c757d; text-transform: uppercase; font-weight: bold; font-size: 0.75rem; margin-bottom: 0.5rem;">ผู้เช่า</p>
+                                <div t-field="doc.partner_id" t-options='{"widget": "contact", "fields": ["name", "address", "phone", "email"], "no_marker": True}'/>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
 
                 <!-- Rental Period -->
                 <div class="mb-4">
@@ -69,8 +74,8 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td><span t-field="doc.rental_start_date"/></td>
-                                <td><span t-field="doc.rental_return_date"/></td>
+                                <td><span t-field="doc.rental_start_date" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/></td>
+                                <td><span t-field="doc.rental_return_date" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/></td>
                                 <td>
                                     <t t-if="doc.duration_days">
                                         <span t-field="doc.duration_days"/>
@@ -212,7 +217,7 @@
                 </div>
 
                 <!-- Signatures -->
-                <div class="mt-5">
+                <div class="mt-5" style="page-break-before: always;">
                     <h5 class="border-bottom pb-1">การรับทราบและยืนยัน</h5>
                     <p class="mb-4">
                         ข้าพเจ้า ผู้ลงนามด้านล่าง ขอรับทราบว่าได้รับสินค้าข้างต้นในสภาพดี

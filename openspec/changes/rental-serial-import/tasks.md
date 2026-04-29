@@ -35,6 +35,6 @@
 - [x] 5.2 Test re-import: run the same CSV again → verify all 5 rows reported as `skipped` with warnings, no duplicates created
 - [x] 5.3 Test in-CSV duplicates: upload a CSV with the same serial twice for the same product → verify first creates, second skips with warning
 - [x] 5.4 Test validation errors: rows with missing sap_code, non-rentable product, non-serial-tracked product, multi-variant template — verify each lands in `row_errors` with a clear message and other rows still process
-- [ ] 5.5 Test missing warehouse config: temporarily clear `lot_stock_id` → verify import aborts with a clear error before processing rows
-- [ ] 5.6 Test accounting: verify journal entries are created with debit to Stock Valuation and credit to Inventory Adjustment at `product.standard_price`
-- [ ] 5.7 Test zero-cost product: import a product with `standard_price = 0` → verify lot/quant created but no valuation entry (or zero-value entry per Odoo behavior)
+- [x] 5.5 Test missing warehouse config: temporarily clear `lot_stock_id` → verify import aborts with a clear error before processing rows
+- [x] 5.6 Test accounting: verify journal entries are created with debit to Stock Valuation and credit to Inventory Adjustment at `product.standard_price`
+- [x] 5.7 Test zero-cost product: import a product with `standard_price = 0` → verify lot/quant created but no valuation entry (or zero-value entry per Odoo behavior)
