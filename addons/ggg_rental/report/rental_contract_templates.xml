@@ -24,6 +24,10 @@
                 @page {
                     margin-top: 55mm;
                 }
+                table.parties-table,
+                table.parties-table td {
+                    border: none !important;
+                }
             </style>
 
             <!-- Pre-compute filtered line sets -->
@@ -44,16 +48,16 @@
                 </div>
 
                 <!-- Parties -->
-                <table width="100%" style="margin-bottom: 1.5rem; border-collapse: collapse;">
+                <table class="parties-table" width="100%" style="margin-bottom: 1.5rem; border-collapse: collapse; border: none;">
                     <tr>
-                        <td width="50%" style="vertical-align: top; padding-right: 8px;">
-                            <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem;">
+                        <td width="50%" style="vertical-align: top; padding-right: 8px; border: none;">
+                            <div style="padding: 1rem;">
                                 <p style="color: #6c757d; text-transform: uppercase; font-weight: bold; font-size: 0.75rem; margin-bottom: 0.5rem;">ผู้ให้เช่า</p>
                                 <div t-field="doc.company_id.partner_id" t-options='{"widget": "contact", "fields": ["name", "address", "phone", "email"], "no_marker": True}'/>
                             </div>
                         </td>
-                        <td width="50%" style="vertical-align: top; padding-left: 8px;">
-                            <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem;">
+                        <td width="50%" style="vertical-align: top; padding-left: 8px; border: none;">
+                            <div style="padding: 1rem;">
                                 <p style="color: #6c757d; text-transform: uppercase; font-weight: bold; font-size: 0.75rem; margin-bottom: 0.5rem;">ผู้เช่า</p>
                                 <div t-field="doc.partner_id" t-options='{"widget": "contact", "fields": ["name", "address", "phone", "email"], "no_marker": True}'/>
                             </div>
