@@ -15,3 +15,5 @@ from . import sale_order
 from . import sale_order_line
 from . import sale_order_recurrence
 from . import stock_lot
+from . import qa_scenario_log
+from . import qa_scenario

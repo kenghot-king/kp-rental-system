@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="qa_scenario_form_view" model="ir.ui.view">
+        <field name="name">qa.scenario.form</field>
+        <field name="model">qa.scenario</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_apply"
+                        string="Apply"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'draft'"/>
+                    <button name="action_revert"
+                        string="Revert All"
+                        type="object"
+                        class="btn-warning"
+                        invisible="state != 'applied'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,applied,reverted"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" readonly="state != 'draft'" placeholder="e.g. Sprint 12 - Late Pickup Test"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="scenario" readonly="state != 'draft'"/>
+                            <field name="days" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <field name="order_ids"
+                        readonly="state != 'draft'"
+                        widget="many2many_list"
+                        string="Target Orders">
+                        <list>
+                            <field name="name"/>
+                            <field name="partner_id"/>
+                            <field name="rental_start_date"/>
+                            <field name="rental_return_date"/>
+                            <field name="rental_status"/>
+                            <field name="is_late"/>
+                        </list>
+                    </field>
+                    <notebook>
+                        <page string="Apply Log" invisible="not log_ids">
+                            <field name="log_ids" readonly="1">
+                                <list>
+                                    <field name="order_id"/>
+                                    <field name="field_changed"/>
+                                    <field name="original_value"/>
+                                    <field name="new_value"/>
+                                    <field name="applied_by"/>
+                                    <field name="applied_at"/>
+                                    <field name="reverted"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="qa_scenario_list_view" model="ir.ui.view">
+        <field name="name">qa.scenario.list</field>
+        <field name="model">qa.scenario</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="scenario"/>
+                <field name="days"/>
+                <field name="state"/>
+                <field name="create_uid"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_qa_scenario" model="ir.actions.act_window">
+        <field name="name">QA Scenarios</field>
+        <field name="res_model">qa.scenario</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a QA scenario to simulate rental states for testing.
+            </p>
+        </field>
+    </record>
+
+</odoo>

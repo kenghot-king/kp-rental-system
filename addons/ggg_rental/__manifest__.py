@@ -43,6 +43,8 @@ Manage user and manager notifications.
         'wizard/rental_deposit_sync_views.xml',
         'wizard/rental_processing_views.xml',
         'wizard/rental_daily_reconciliation_period_report_views.xml',
+        'views/qa_scenario_views.xml',
+        'views/qa_scenario_log_views.xml',
         'views/sale_renting_menus.xml',
     ],
     'demo': [

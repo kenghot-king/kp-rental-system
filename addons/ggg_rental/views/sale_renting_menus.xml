@@ -101,6 +101,23 @@
 
         </menuitem>
 
+        <menuitem id="menu_rental_qa"
+            name="QA"
+            groups="ggg_rental.group_qa_tester"
+            sequence="9">
+
+            <menuitem id="menu_rental_qa_scenarios"
+                name="Scenarios"
+                action="action_qa_scenario"
+                sequence="1"/>
+
+            <menuitem id="menu_rental_qa_logs"
+                name="Logs"
+                action="action_qa_scenario_log"
+                sequence="2"/>
+
+        </menuitem>
+
         <menuitem id="menu_rental_config"
             name="Configuration"
             groups="sales_team.group_sale_manager"
