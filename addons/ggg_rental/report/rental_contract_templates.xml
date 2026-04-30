@@ -107,7 +107,7 @@
                                 <th class="text-start">รายละเอียด</th>
                                 <th class="text-end">จำนวน</th>
                                 <th class="text-end">ราคาต่อหน่วย</th>
-                                <th class="text-end">ยอดรวม</th>
+                                <th class="text-end">รวม</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -120,10 +120,10 @@
                                 </td>
                                 <td class="text-end"><span t-field="line.product_uom_qty"/></td>
                                 <td class="text-end">
-                                    <span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(line.price_unit)"/>
                                 </td>
                                 <td class="text-end">
-                                    <span t-field="line.price_subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(line.price_subtotal)"/>
                                 </td>
                             </tr>
                         </tbody>
@@ -131,7 +131,7 @@
                             <tr>
                                 <td colspan="3" class="text-end fw-bold">ยอดรวมค่าเช่า</td>
                                 <td class="text-end fw-bold">
-                                    <span t-field="doc.rental_lines_subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(doc.rental_lines_subtotal)"/>
                                 </td>
                             </tr>
                         </tfoot>
@@ -155,10 +155,10 @@
                                 <td><span t-field="line.name"/></td>
                                 <td class="text-end"><span t-field="line.product_uom_qty"/></td>
                                 <td class="text-end">
-                                    <span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(line.price_unit)"/>
                                 </td>
                                 <td class="text-end">
-                                    <span t-field="line.price_subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(line.price_subtotal)"/>
                                 </td>
                             </tr>
                         </tbody>
@@ -166,7 +166,7 @@
                             <tr>
                                 <td colspan="3" class="text-end fw-bold">ยอดรวมเงินประกัน</td>
                                 <td class="text-end fw-bold">
-                                    <span t-field="doc.deposit_lines_subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(doc.deposit_lines_subtotal)"/>
                                 </td>
                             </tr>
                         </tfoot>
@@ -180,25 +180,25 @@
                             <tr>
                                 <td>ยอดรวมค่าเช่า</td>
                                 <td class="text-end">
-                                    <span t-field="doc.rental_lines_subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(doc.rental_lines_subtotal)"/>
                                 </td>
                             </tr>
                             <tr t-if="deposit_lines">
                                 <td>เงินประกัน</td>
                                 <td class="text-end">
-                                    <span t-field="doc.deposit_lines_subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(doc.deposit_lines_subtotal)"/>
                                 </td>
                             </tr>
                             <tr t-if="doc.amount_tax">
                                 <td>ภาษี</td>
                                 <td class="text-end">
-                                    <span t-field="doc.amount_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(doc.amount_tax)"/>
                                 </td>
                             </tr>
                             <tr class="border-top">
                                 <td class="fw-bold">ยอดรวมทั้งสิ้น</td>
                                 <td class="text-end fw-bold">
-                                    <span t-field="doc.amount_total" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(doc.amount_total)"/>
                                 </td>
                             </tr>
                         </table>
@@ -218,29 +218,6 @@
                             การคืนสินค้าล่าช้าจะมีค่าใช้จ่ายเพิ่มเติมตามที่ระบุในสัญญาเช่า
                         </p>
                     </t>
-                </div>
-
-                <!-- Signatures -->
-                <div class="mt-5" style="page-break-before: always;">
-                    <h5 class="border-bottom pb-1">การรับทราบและยืนยัน</h5>
-                    <p class="mb-4">
-                        ข้าพเจ้า ผู้ลงนามด้านล่าง ขอรับทราบว่าได้รับสินค้าข้างต้นในสภาพดี
-                        และยินยอมปฏิบัติตามเงื่อนไขที่ระบุในสัญญาฉบับนี้
-                    </p>
-                    <div class="row mt-4">
-                        <div class="col-6">
-                            <p class="mb-0">ลายเซ็นผู้เช่า:</p>
-                            <div style="border-bottom: 1px solid #000; margin-top: 50px; margin-bottom: 6px;"/>
-                            <p class="mb-1"><span t-field="doc.partner_id.name"/></p>
-                            <p class="text-muted small">วันที่: ___________________________</p>
-                        </div>
-                        <div class="col-6">
-                            <p class="mb-0">ผู้รับมอบอำนาจ:</p>
-                            <div style="border-bottom: 1px solid #000; margin-top: 50px; margin-bottom: 6px;"/>
-                            <p class="mb-1"><span t-field="doc.user_id.name"/></p>
-                            <p class="text-muted small">วันที่: ___________________________</p>
-                        </div>
-                    </div>
                 </div>
 
             </div>

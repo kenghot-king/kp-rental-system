@@ -144,8 +144,7 @@
                                     <t t-out="', '.join(line.tax_ids.mapped('tax_group_id.name'))"/>
                                 </td>
                                 <td style="text-align:right; padding:3px;">
-                                    <span t-field="line.price_subtotal"
-                                          t-options='{"widget":"monetary","display_currency":o.currency_id}'/>
+                                    <span t-esc="'{:,.2f}'.format(line.price_subtotal)"/>
                                 </td>
                             </tr>
                         </t>

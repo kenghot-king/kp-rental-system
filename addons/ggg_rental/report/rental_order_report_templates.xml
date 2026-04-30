@@ -76,4 +76,39 @@
         </xpath>
     </template>
 
+    <!-- Remove currency symbol from unit price and subtotal columns -->
+    <template id="report_saleorder_no_currency_symbol" inherit_id="sale.report_saleorder_document">
+        <xpath expr="//td[@name='td_product_priceunit']/span" position="replace">
+            <span t-if="not collapse_prices"
+                  t-esc="'{:,.2f}'.format(line.price_unit)"/>
+        </xpath>
+        <xpath expr="//td[@name='td_product_subtotal']//span[@t-field='line.price_subtotal']" position="replace">
+            <span t-if="price_field == 'price_subtotal'"
+                  t-esc="'{:,.2f}'.format(line.price_subtotal)"/>
+        </xpath>
+        <xpath expr="//td[@name='td_product_subtotal']//span[@t-field='line.price_total']" position="replace">
+            <span t-else=""
+                  t-esc="'{:,.2f}'.format(line.price_total)"/>
+        </xpath>
+    </template>
+
+    <!-- Remove currency symbol from totals section (Untaxed Amount, VAT, Total) -->
+    <template id="sale_document_tax_totals_no_currency" inherit_id="sale.document_tax_totals">
+        <xpath expr="//span[@t-att-class and contains(@t-out,'base_amount_currency')]" position="replace">
+            <span t-att-class="oe_subtotal_footer_separator"
+                  t-esc="'{:,.2f}'.format(subtotal['base_amount_currency'])"/>
+        </xpath>
+        <xpath expr="//span[contains(@t-out,'display_base_amount_currency')]" position="replace">
+            <span class="text-nowrap"
+                  t-esc="'{:,.2f}'.format(tax_group['display_base_amount_currency'])"/>
+        </xpath>
+        <xpath expr="//span[contains(@t-out,'tax_amount_currency')]" position="replace">
+            <span class="text-nowrap"
+                  t-esc="'{:,.2f}'.format(tax_group['tax_amount_currency'])"/>
+        </xpath>
+        <xpath expr="//tr[@class='o_total']//strong" position="replace">
+            <strong t-esc="'{:,.2f}'.format(tax_totals['total_amount_currency'])"/>
+        </xpath>
+    </template>
+
 </odoo>
