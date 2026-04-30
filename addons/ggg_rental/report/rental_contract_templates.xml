@@ -174,35 +174,33 @@
                 </div>
 
                 <!-- Financial Summary -->
-                <div class="row mb-4">
-                    <div class="col-6 offset-6">
-                        <table class="table table-sm">
-                            <tr>
-                                <td>ยอดรวมค่าเช่า</td>
-                                <td class="text-end">
-                                    <span t-esc="'{:,.2f}'.format(doc.rental_lines_subtotal)"/>
-                                </td>
-                            </tr>
-                            <tr t-if="deposit_lines">
-                                <td>เงินประกัน</td>
-                                <td class="text-end">
-                                    <span t-esc="'{:,.2f}'.format(doc.deposit_lines_subtotal)"/>
-                                </td>
-                            </tr>
-                            <tr t-if="doc.amount_tax">
-                                <td>ภาษี</td>
-                                <td class="text-end">
-                                    <span t-esc="'{:,.2f}'.format(doc.amount_tax)"/>
-                                </td>
-                            </tr>
-                            <tr class="border-top">
-                                <td class="fw-bold">ยอดรวมทั้งสิ้น</td>
-                                <td class="text-end fw-bold">
-                                    <span t-esc="'{:,.2f}'.format(doc.amount_total)"/>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+                <div style="display: table; width: 50%; margin-left: auto; margin-bottom: 1.5rem; page-break-inside: avoid;">
+                    <table class="table table-sm" style="width: 100%;">
+                        <tr>
+                            <td>ยอดรวมค่าเช่า</td>
+                            <td class="text-end">
+                                <span t-esc="'{:,.2f}'.format(doc.rental_lines_subtotal)"/>
+                            </td>
+                        </tr>
+                        <tr t-if="deposit_lines">
+                            <td>เงินประกัน</td>
+                            <td class="text-end">
+                                <span t-esc="'{:,.2f}'.format(doc.deposit_lines_subtotal)"/>
+                            </td>
+                        </tr>
+                        <tr t-if="doc.amount_tax">
+                            <td>ภาษี</td>
+                            <td class="text-end">
+                                <span t-esc="'{:,.2f}'.format(doc.amount_tax)"/>
+                            </td>
+                        </tr>
+                        <tr class="border-top">
+                            <td class="fw-bold">ยอดรวมทั้งสิ้น</td>
+                            <td class="text-end fw-bold">
+                                <span t-esc="'{:,.2f}'.format(doc.amount_total)"/>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
 
                 <!-- Terms and Conditions -->
