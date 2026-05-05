@@ -123,7 +123,7 @@
                                     <span t-esc="'{:,.2f}'.format(line.price_unit)"/>
                                 </td>
                                 <td class="text-end">
-                                    <span t-esc="'{:,.2f}'.format(line.price_subtotal)"/>
+                                    <span t-esc="'{:,.2f}'.format(line.price_total)"/>
                                 </td>
                             </tr>
                         </tbody>
@@ -131,7 +131,7 @@
                             <tr>
                                 <td colspan="3" class="text-end fw-bold">ยอดรวมค่าเช่า</td>
                                 <td class="text-end fw-bold">
-                                    <span t-esc="'{:,.2f}'.format(doc.rental_lines_subtotal)"/>
+                                    <span t-esc="'{:,.2f}'.format(sum(rental_lines.mapped('price_total')))"/>
                                 </td>
                             </tr>
                         </tfoot>
@@ -177,9 +177,9 @@
                 <div style="display: table; width: 50%; margin-left: auto; margin-bottom: 1.5rem; page-break-inside: avoid;">
                     <table class="table table-sm" style="width: 100%;">
                         <tr>
-                            <td>ยอดรวมค่าเช่า</td>
+                            <td>ยอดรวมค่าเช่า (รวมภาษี)</td>
                             <td class="text-end">
-                                <span t-esc="'{:,.2f}'.format(doc.rental_lines_subtotal)"/>
+                                <span t-esc="'{:,.2f}'.format(sum(rental_lines.mapped('price_total')))"/>
                             </td>
                         </tr>
                         <tr t-if="deposit_lines">
@@ -188,12 +188,24 @@
                                 <span t-esc="'{:,.2f}'.format(doc.deposit_lines_subtotal)"/>
                             </td>
                         </tr>
-                        <tr t-if="doc.amount_tax">
-                            <td>ภาษี</td>
+                        <tr>
+                            <td>ยอดรวมค่าเช่า (ไม่รวมภาษี)</td>
                             <td class="text-end">
-                                <span t-esc="'{:,.2f}'.format(doc.amount_tax)"/>
+                                <span t-esc="'{:,.2f}'.format(doc.rental_lines_subtotal)"/>
                             </td>
                         </tr>
+                        <t t-if="doc.tax_totals">
+                            <t t-foreach="doc.tax_totals['subtotals']" t-as="subtotal">
+                                <t t-foreach="subtotal['tax_groups']" t-as="tax_group">
+                                    <tr>
+                                        <td><span t-out="tax_group['group_name']"/></td>
+                                        <td class="text-end">
+                                            <span t-esc="'{:,.2f}'.format(tax_group['tax_amount_currency'])"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
+                        </t>
                         <tr class="border-top">
                             <td class="fw-bold">ยอดรวมทั้งสิ้น</td>
                             <td class="text-end fw-bold">
