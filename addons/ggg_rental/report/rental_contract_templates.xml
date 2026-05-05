@@ -139,7 +139,7 @@
                 </div>
 
                 <!-- Deposits (only if any exist) -->
-                <div class="mb-4" t-if="deposit_lines">
+                <div class="mb-4" t-if="deposit_lines" style="page-break-before: always;">
                     <h5 class="border-bottom pb-1">เงินประกัน</h5>
                     <table class="table table-sm o_main_table">
                         <thead>

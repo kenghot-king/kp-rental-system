@@ -106,7 +106,7 @@
             <span class="text-nowrap"
                   t-esc="'{:,.2f}'.format(tax_group['tax_amount_currency'])"/>
         </xpath>
-        <xpath expr="//tr[@class='o_total']//strong" position="replace">
+        <xpath expr="//tr[@class='o_total']/td[last()]//strong" position="replace">
             <strong t-esc="'{:,.2f}'.format(tax_totals['total_amount_currency'])"/>
         </xpath>
     </template>
