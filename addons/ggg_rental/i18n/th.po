@@ -16,6 +16,8 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #. module: account
+#: model_terms:ir.ui.view,arch_db:account.bill_preview
+#: model_terms:ir.ui.view,arch_db:account.document_tax_totals_company_currency_template
 #: model_terms:ir.ui.view,arch_db:account.document_tax_totals_template
-msgid "Total"
-msgstr "ยอดรวม"
+msgid "<strong>Total</strong>"
+msgstr "<strong>ยอดรวม</strong>"
