@@ -326,15 +326,19 @@ class SaleOrder(models.Model):
             ))
             all_paid = paid_invoices >= total_invoices
 
-            # Axis 3: Deposit refunded
+            # Axis 3: Deposit refunded/settled
+            # A deposit is settled if it was refunded via CN OR paid (forfeited via hold)
             if deposit_invoices:
                 total_deposit_amount = sum(deposit_invoices.mapped('amount_total'))
                 total_refunded = 0.0
                 for dep_inv in deposit_invoices:
-                    credits = dep_inv.reversal_move_ids.filtered(
-                        lambda m: m.state != 'cancel'
-                    )
-                    total_refunded += sum(abs(c.amount_total) for c in credits)
+                    if dep_inv.payment_state == 'paid':
+                        total_refunded += dep_inv.amount_total
+                    else:
+                        credits = dep_inv.reversal_move_ids.filtered(
+                            lambda m: m.state != 'cancel'
+                        )
+                        total_refunded += sum(abs(c.amount_total) for c in credits)
                 all_deposit_refunded = total_refunded >= total_deposit_amount
             else:
                 total_deposit_amount = 0.0
@@ -488,7 +492,10 @@ class SaleOrder(models.Model):
             )
             if not posted_invoices:
                 raise UserError(_("Cannot process pickup: no invoice has been issued for this order."))
-            unpaid = posted_invoices.filtered(lambda inv: inv.payment_state != 'paid')
+            unpaid = posted_invoices.filtered(
+                lambda inv: inv.payment_state != 'paid'
+                and not (inv.is_deposit_invoice and inv.deposit_hold_state == 'hold')
+            )
             if unpaid:
                 raise UserError(_(
                     "Cannot process pickup: the following invoice(s) are not fully paid: %s",

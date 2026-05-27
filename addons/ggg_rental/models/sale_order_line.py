@@ -500,6 +500,8 @@ class SaleOrderLine(models.Model):
                 continue
 
             deposit_invoice = deposit_invoice_lines[0].move_id
+            if deposit_invoice.deposit_hold_state == 'hold':
+                continue
             deposit_amount = sum(deposit_invoice_lines.mapped('price_total'))
 
             # Calculate proportional credit amount
@@ -543,6 +545,14 @@ class SaleOrderLine(models.Model):
             }
             credit_note = self.env['account.move'].sudo().create(credit_note_vals)
             credit_note.action_post()
+
+            # Cancel any released hold payment (record kept for audit; approval_code preserved)
+            released_hold = deposit_invoice.deposit_hold_payment_ids.filtered(
+                lambda p: p.is_deposit_hold and p.hold_state == 'released'
+            )
+            for hold in released_hold:
+                hold.action_cancel()
+                hold.hold_state = 'cancelled'
 
             # Trigger rental completion recompute
             self.order_id._recompute_rental_completion()

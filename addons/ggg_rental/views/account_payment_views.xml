@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <field name="memo" position="after">
                 <field name="is_rental_payment" invisible="1"/>
+                <field name="is_deposit_hold" invisible="1"/>
                 <field name="cashier_id" readonly="1"/>
                 <field name="approval_code"/>
                 <field name="payment_reference"
@@ -14,8 +15,29 @@
                     invisible="not is_rental_payment"/>
                 <field name="payment_reference_2"
                     invisible="not is_rental_payment"/>
+                <field name="deposit_invoice_id"
+                    readonly="1"
+                    invisible="not is_deposit_hold"/>
+                <field name="hold_state"
+                    readonly="1"
+                    invisible="not is_deposit_hold"/>
                 <field name="display_method" invisible="1"/>
             </field>
+        </field>
+    </record>
+
+    <!-- Search filter: deposit hold payments -->
+    <record id="view_account_payment_search_hold" model="ir.ui.view">
+        <field name="name">account.payment.search.hold</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter string="Credit Holds" name="deposit_hold"
+                        domain="[('is_deposit_hold', '=', True)]"/>
+                <filter string="Active Holds" name="deposit_hold_active"
+                        domain="[('is_deposit_hold', '=', True), ('hold_state', '=', 'active')]"/>
+            </xpath>
         </field>
     </record>
 </odoo>

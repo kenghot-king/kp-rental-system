@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_deposit_hold_forfeit_wizard_form" model="ir.ui.view">
+        <field name="name">account.payment.forfeit.wizard.form</field>
+        <field name="model">account.payment.forfeit.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Forfeit Deposit Hold">
+                <div class="alert alert-warning" role="alert">
+                    This will post the hold payment and mark the deposit invoice as paid.
+                    The action cannot be undone.
+                </div>
+                <group>
+                    <field name="invoice_id" readonly="1"/>
+                    <field name="payment_id" readonly="1"/>
+                    <field name="date"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" string="Confirm Forfeiture"
+                            type="object" class="btn-danger"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

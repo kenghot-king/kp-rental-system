@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="deposit_certificate_document">
+        <t t-call="web.external_layout">
+            <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
+            <div class="page">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <strong style="font-size:14pt;">ใบมัดจำ (Deposit Certificate)</strong>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <strong>Customer:</strong>
+                        <span t-field="doc.partner_id.name"/>
+                    </div>
+                    <div class="col-6 text-end">
+                        <strong>Date:</strong>
+                        <span t-field="doc.deposit_hold_payment_ids[0].date"
+                              t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                    </div>
+                </div>
+
+                <table class="table table-bordered" style="font-size:10pt;">
+                    <thead>
+                        <tr>
+                            <th>Invoice No.</th>
+                            <th>Description</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="doc.invoice_line_ids" t-as="line">
+                            <td><span t-field="doc.name"/></td>
+                            <td><span t-field="line.name"/></td>
+                            <td class="text-end">
+                                <span t-esc="'{:,.2f}'.format(line.price_subtotal)"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" class="text-end fw-bold">Hold Amount</td>
+                            <td class="text-end fw-bold">
+                                <span t-esc="'{:,.2f}'.format(doc.deposit_hold_payment_ids[0].amount)"/>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <t t-if="doc.deposit_hold_payment_ids[0].approval_code">
+                            <strong>Approval Code:</strong>
+                            <span t-field="doc.deposit_hold_payment_ids[0].approval_code"/>
+                        </t>
+                    </div>
+                    <div class="col-6">
+                        <t t-if="doc.deposit_hold_payment_ids[0].payment_reference_2">
+                            <strong>Card Reference:</strong>
+                            <span t-field="doc.deposit_hold_payment_ids[0].payment_reference_2"/>
+                        </t>
+                    </div>
+                </div>
+
+                <div class="row mt-5">
+                    <div class="col-6 text-center">
+                        <div>____________________________</div>
+                        <div>ผู้รับมอบอำนาจ / Authorized Signature</div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <div>____________________________</div>
+                        <div>ผู้ชำระเงิน / Customer Signature</div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="deposit_certificate_wrapper">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="ggg_rental.deposit_certificate_document" t-lang="doc.partner_id.lang"/>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_deposit_certificate" model="ir.actions.report">
+        <field name="name">Deposit Certificate (ใบมัดจำ)</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ggg_rental.deposit_certificate_wrapper</field>
+        <field name="report_file">ggg_rental.deposit_certificate_wrapper</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="paperformat_id" ref="base.paperformat_us"/>
+    </record>
+</odoo>

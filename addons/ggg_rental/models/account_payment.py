@@ -12,6 +12,37 @@ class AccountPayment(models.Model):
         help="Second external payment reference (e.g. EDC ref, 2c2p ref).",
     )
 
+    is_deposit_hold = fields.Boolean(
+        string="Is Deposit Hold",
+        default=False,
+        copy=False,
+        tracking=True,
+        help="True when this payment represents a credit card pre-authorization hold on "
+             "a deposit invoice. No journal entry is created until the hold is forfeited.",
+    )
+
+    hold_state = fields.Selection(
+        [
+            ('active', 'Active'),
+            ('released', 'Released'),
+            ('forfeited', 'Forfeited'),
+            ('cancelled', 'Cancelled'),
+        ],
+        string="Hold State",
+        copy=False,
+        tracking=True,
+        help="Lifecycle state of a deposit hold payment. Only meaningful when is_deposit_hold=True.",
+    )
+
+    deposit_invoice_id = fields.Many2one(
+        'account.move',
+        string="Deposit Invoice",
+        copy=False,
+        index=True,
+        ondelete='set null',
+        help="The deposit invoice this hold payment is associated with.",
+    )
+
     is_rental_payment = fields.Boolean(
         string="Is Rental Payment",
         compute='_compute_is_rental_payment',
@@ -66,6 +97,15 @@ class AccountPayment(models.Model):
     def _compute_display_method(self):
         for payment in self:
             payment.display_method = payment.payment_method_line_id.name or False
+
+    def action_post(self):
+        for payment in self:
+            if payment.is_deposit_hold and not self.env.context.get('_forfeit_flow'):
+                raise UserError(_(
+                    "Cannot post a credit hold payment directly. "
+                    "Use the Forfeit action on the deposit invoice instead."
+                ))
+        return super().action_post()
 
     @api.model_create_multi
     def create(self, vals_list):
