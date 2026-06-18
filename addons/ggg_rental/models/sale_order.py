@@ -327,12 +327,16 @@ class SaleOrder(models.Model):
             all_paid = paid_invoices >= total_invoices
 
             # Axis 3: Deposit refunded/settled
-            # A deposit is settled if it was refunded via CN OR paid (forfeited via hold)
+            # Settled if: paid (forfeited), refunded via CN, or hold released (unhold done)
             if deposit_invoices:
                 total_deposit_amount = sum(deposit_invoices.mapped('amount_total'))
                 total_refunded = 0.0
                 for dep_inv in deposit_invoices:
                     if dep_inv.payment_state == 'paid':
+                        total_refunded += dep_inv.amount_total
+                    elif dep_inv.deposit_hold_payment_ids.filtered(
+                        lambda p: p.hold_state in ('released', 'cancelled')
+                    ):
                         total_refunded += dep_inv.amount_total
                     else:
                         credits = dep_inv.reversal_move_ids.filtered(
