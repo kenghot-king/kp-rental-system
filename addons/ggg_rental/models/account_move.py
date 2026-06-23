@@ -100,6 +100,24 @@ class AccountMove(models.Model):
             return ''
         return num2words(self.amount_total, lang='th', to='currency')
 
+    def _get_receipt_paid_date(self):
+        """Date money actually changed hands, for the receipt 'Date' field.
+
+        Assumes no partial payments (one invoice settled by a single payment);
+        if several payments exist, the latest is used. Falls back to the
+        invoice date when no reconciled payment is found.
+        """
+        self.ensure_one()
+        dates = (self.reconciled_payment_ids | self.matched_payment_ids).mapped('date')
+        dates = [d for d in dates if d]
+        return max(dates) if dates else self.invoice_date
+
+    def _deposit_certificate_so_number(self):
+        """Sale Order number shown as 'No.' and used in the certificate file name."""
+        self.ensure_one()
+        order = self._get_linked_rental_orders()[:1]
+        return order.name or self.name
+
     def _get_name_invoice_report(self):
         self.ensure_one()
         if self.move_type == 'out_invoice' and self.payment_state != 'paid':

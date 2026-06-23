@@ -5,6 +5,8 @@
     <template id="ggg_report_invoice_document">
         <t t-call="web.external_layout">
             <t t-set="o" t-value="o.with_context(lang=lang)"/>
+            <!-- True when rendered as the ใบมัดจำ (Deposit Certificate) report -->
+            <t t-set="deposit_certificate" t-value="o.env.context.get('deposit_certificate')"/>
 
             <!-- WHT detection -->
             <t t-set="wht_lines"
@@ -37,7 +39,8 @@
                 <!-- ── TITLE ────────────────────────────────────────────── -->
                 <div style="text-align:center; margin:6px 0 10px 0;">
                     <strong style="font-size:13pt;">
-                        <t t-if="o.move_type == 'out_refund'">ใบลดหนี้</t>
+                        <t t-if="deposit_certificate">ใบมัดจำ</t>
+                        <t t-elif="o.move_type == 'out_refund'">ใบลดหนี้</t>
                         <t t-elif="vat_lines">ใบเสร็จรับเงิน/ใบกำกับภาษี</t>
                         <t t-else="">ใบเสร็จรับเงิน</t>
                     </strong>
@@ -90,11 +93,14 @@
                                     <td width="45%" style="white-space:nowrap; padding:2px 4px 2px 0; border:none; border-width:0;">
                                         <strong>No.:</strong>
                                     </td>
-                                    <td style="padding:2px 0; border:none; border-width:0;"><span t-field="o.name"/></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;">
+                                        <t t-if="deposit_certificate"><span t-esc="o._deposit_certificate_so_number()"/></t>
+                                        <t t-else=""><span t-field="o.name"/></t>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td style="padding:2px 4px 2px 0; border:none; border-width:0;"><strong>Date:</strong></td>
-                                    <td style="padding:2px 0; border:none; border-width:0;"><span t-field="o.invoice_date" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/></td>
+                                    <td style="padding:2px 0; border:none; border-width:0;"><span t-out="o._get_receipt_paid_date()" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/></td>
                                 </tr>
                                 <tr>
                                     <td style="padding:2px 4px 2px 0; border:none; border-width:0;"><strong>Term of Payment:</strong></td>
@@ -243,7 +249,8 @@
                     </div>
                 </t>
 
-                <!-- ── RECEIVED NOTE + SIGNATURES ────────────────────────── -->
+                <!-- ── RECEIVED NOTE + SIGNATURES (hidden on the Deposit Certificate) ── -->
+                <t t-if="not deposit_certificate">
                 <table width="100%" style="margin-top:12px; font-size:9pt; border-collapse:collapse;">
                     <tr>
                         <!-- Left: received-by -->
@@ -273,8 +280,20 @@
                         </td>
                     </tr>
                 </table>
+                </t>
 
             </div><!-- /page -->
+        </t>
+    </template>
+
+    <!-- ── Deposit Certificate (ใบมัดจำ): same Thai layout, deposit mode ──── -->
+    <template id="report_deposit_certificate_thai">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="lang" t-value="o.partner_id.lang"/>
+                <t t-set="o" t-value="o.with_context(deposit_certificate=True)"/>
+                <t t-call="ggg_rental.ggg_report_invoice_document" t-lang="lang"/>
+            </t>
         </t>
     </template>
 
