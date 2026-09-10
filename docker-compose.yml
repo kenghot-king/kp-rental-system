@@ -19,7 +19,8 @@ services:
     command: >
       -- --addons-path=/mnt/extra-addons/test
          --db_host=db --db_user=odoo --db_password=odoo
-         -d test_ce --init=base
+         -d test_ce,tab_complex,tab_onebkk
+         --max-cron-threads=0
          --dev=reload
 
   # odoo-guard:

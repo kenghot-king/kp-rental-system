@@ -1,20 +1,32 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Product: GGG Rental, an Odoo 19 Community Edition custom rental system for Thailand.
+  Runtime: Python/Odoo ORM, OWL JavaScript, XML/QWeb, PostgreSQL 16, and Docker Compose.
+  Custom modules are in addons/: ggg_rental (core), ggg_gantt, ggg_rental_website,
+  and ggg_app_launcher. Enterprise is a read-only local reference and must not be changed.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Critical domain flows: quotation, confirmation/reservation, pickup, return/inspection,
+  rental pricing, deposits (cash and hold), invoicing, payments/refunds, and Thai tax documents.
+  Changes to stock, accounting, payment, access rules, or reports must preserve data integrity,
+  describe migration/upgrade effects, and include clear verification steps.
+
+  Primary documentation: documents/rental_workflow.md, documents/EA.md, documents/QA/,
+  and the consolidated specifications in openspec/specs/. Use archived OpenSpec changes for
+  historical decisions. Follow AGENTS.md for development and verification rules.
+
+rules:
+  proposal:
+    - State the user/business problem, affected rental lifecycle stages, scope, and non-goals.
+    - Identify whether the change affects stock, accounting, deposits, payments, access control, or Thai documents.
+    - Name the relevant existing specification and archived change when modifying established behavior.
+  design:
+    - Describe affected Odoo models, fields, views/wizards/controllers, reports, security, and data migration or module-upgrade implications.
+    - Preserve standard Odoo accounting and stock move invariants; do not propose direct database mutation as a feature implementation.
+    - Define failure paths and edge cases, especially partial returns, held deposits, refunds, and concurrent stock availability.
+  specs:
+    - Express requirements as observable SHALL statements with scenarios and boundary conditions.
+    - Include both successful and rejected behavior where a business rule protects financial or inventory data.
+  tasks:
+    - Include implementation, automated checks, module upgrade/test steps, and any required manual QA or report rendering checks.
+    - Keep each task independently verifiable and do not mark it complete until its stated verification has passed.

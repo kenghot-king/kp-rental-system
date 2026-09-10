@@ -1,18 +1,18 @@
 # BRD: Odoo MCP Server
 
-> Generic MCP server for Claude Code ↔ Odoo integration via JSON-RPC
+> Generic MCP server for Codex ↔ Odoo integration via JSON-RPC
 > Date: 2026-04-06
 
 ---
 
 ## 1. Overview
 
-A Model Context Protocol (MCP) server that connects Claude Code to any running Odoo instance via JSON-RPC. Provides generic tools for querying, creating, updating, and executing methods on any Odoo model — no custom endpoints needed, no updates required when models change.
+A Model Context Protocol (MCP) server that connects Codex to any running Odoo instance via JSON-RPC. It provides generic tools for querying, creating, updating, and executing methods on any Odoo model — no custom endpoints needed, no updates required when models change.
 
 ```
 ┌──────────┐     stdio     ┌──────────────┐   JSON-RPC   ┌──────────┐
-│  Claude  │──────────────▶│  MCP Server  │─────────────▶│  Odoo    │
-│  Code    │◀──────────────│  (Python)    │◀─────────────│  Instance│
+│  Codex   │──────────────▶│  MCP Server  │─────────────▶│  Odoo    │
+│          │◀──────────────│  (Python)    │◀─────────────│  Instance│
 └──────────┘               └──────────────┘              └──────────┘
 ```
 
@@ -20,8 +20,8 @@ A Model Context Protocol (MCP) server that connects Claude Code to any running O
 
 ## 2. Goals
 
-1. **Dev acceleration** — Claude can query live Odoo data, inspect models, verify field values, and test features without the developer switching to a browser
-2. **Automated testing** — Claude can create test records, execute workflows, and verify expected outcomes programmatically
+1. **Dev acceleration** — Codex can query live Odoo data, inspect models, verify field values, and test features without the developer switching to a browser
+2. **Automated testing** — Codex can create test records, execute workflows, and verify expected outcomes programmatically
 3. **Generic & reusable** — Works with any Odoo module, any model, any version (14+). Build once, never update for model changes
 4. **Zero Odoo modification** — Uses only Odoo's built-in JSON-RPC endpoints, no server-side module required
 
@@ -33,7 +33,7 @@ A Model Context Protocol (MCP) server that connects Claude Code to any running O
 
 - **Language:** Python 3.10+
 - **MCP SDK:** `mcp` (Anthropic's Python SDK)
-- **Transport:** stdio (for Claude Code integration)
+- **Transport:** stdio (for Codex integration)
 - **Odoo Communication:** JSON-RPC via `requests` or `aiohttp`
 - **Config:** Environment variables or `.env` file
 
@@ -191,29 +191,25 @@ Count records matching a domain without fetching data.
 
 ---
 
-## 5. Claude Code Integration
+## 5. Codex Integration
 
 ### 5.1 MCP Config
 
-Add to Claude Code's MCP settings (`~/.claude/claude_code_config.json` or project-level):
+Create an untracked project file at `.codex/config.toml`. Do not place production credentials in this file or commit it.
 
-```json
-{
-  "mcpServers": {
-    "odoo": {
-      "command": "python",
-      "args": ["-m", "odoo_mcp.server"],
-      "cwd": "/path/to/odoo-mcp-server/src",
-      "env": {
-        "ODOO_URL": "http://localhost:8069",
-        "ODOO_DB": "odoo19",
-        "ODOO_USER": "admin",
-        "ODOO_PASSWORD": "admin"
-      }
-    }
-  }
-}
+```toml
+[mcp_servers.odoo]
+command = "python3"
+args = ["-m", "odoo_mcp.server"]
+
+[mcp_servers.odoo.env]
+ODOO_URL = "http://localhost:8069"
+ODOO_DB = "test_ce"
+ODOO_USER = "admin"
+ODOO_PASSWORD = "replace-with-local-secret"
 ```
+
+For a real environment, load the password from the local environment or a secrets manager instead of storing it in a configuration file. Authenticate against a test database before using any write-capable MCP tool.
 
 ### 5.2 Usage Scenarios
 
@@ -269,7 +265,7 @@ Add to Claude Code's MCP settings (`~/.claude/claude_code_config.json` or projec
 
 ## 8. Non-Goals (Out of Scope)
 
-- No SSE/HTTP transport (stdio only for Claude Code)
+- No SSE/HTTP transport (stdio only for Codex)
 - No Odoo module installation required
 - No custom Odoo endpoints
 - No caching layer (Odoo handles its own caching)

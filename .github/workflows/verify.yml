@@ -1,0 +1,25 @@
+name: Verify custom addons
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Python, XML, and manifests
+        run: python3 scripts/verify_addons.py
+      - name: Verify JavaScript syntax
+        run: find addons -name '*.js' -print0 | xargs -0 -r -n1 node --check

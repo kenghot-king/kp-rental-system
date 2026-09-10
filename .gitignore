@@ -1,6 +1,7 @@
 # Backup
 backup_addons/
-
+*.bak
+*.zip
 # Python
 __pycache__/
 *.py[cod]
@@ -35,9 +36,13 @@ docker-compose.override.yml
 
 # Agent
 .agent/
+.agents/
 
 # Claude Code
 .claude/
+
+# Codex local connection settings (may contain development credentials)
+.codex/config.toml
 
 # Enterprise (proprietary)
 enterprise/
@@ -45,3 +50,4 @@ enterprise/
 
 # External addons (managed outside git)
 addons/ggg_app_launcher/
+
