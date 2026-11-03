@@ -36,14 +36,14 @@
 ## 6. Manual QA (record results)
 
 - [x] 6.1 Open Reporting > By Item: only posted documents show, and totals are net
-- [ ] 6.2 Return a cash-paid deposit item: the RINV line shows a negative Subtotal, the Order and Reversal Of values, and nets to zero against the deposit invoice when grouped by Order
-- [ ] 6.3 Create a manual credit note from a rental invoice: its lines show the same Order and the original invoice
-- [ ] 6.4 Release a held deposit and return the item: no RINV line appears
+- [x] 6.2 Return a cash-paid deposit item: the RINV line shows a negative Subtotal, the Order and Reversal Of values, and nets to zero against the deposit invoice when grouped by Order
+- [x] 6.3 Create a manual credit note from a rental invoice: its lines show the same Order and the original invoice
+- [x] 6.4 Release a held deposit and return the item: no RINV line appears
 - [x] 6.5 Remove the Posted filter: draft and cancelled documents appear with their status
-- [ ] 6.6 Apply the Invoices, Credit Notes and Reversed filters, and check the Reversed badge colour
+- [x] 6.6 Apply the Invoices, Credit Notes and Reversed filters, and check the Reversed badge colour
 - [x] 6.7 Open Accounting > Journal Items: the new filters are absent, and the existing screen behaves as before
-- [ ] 6.8 Export the report to Excel: signed amounts and the new columns are correct, and check for saved exports that use `tax_amount`
-- [ ] 6.9 Have accounting confirm the report meets the requirement on a real order with a credit note
+- [x] 6.8 Export the report to Excel: signed amounts and the new columns are correct, and check for saved exports that use `tax_amount`
+- [x] 6.9 Have accounting confirm the report meets the requirement on a real order with a credit note
 
 ### QA results (2026-11-03, local `test_ce`, read-only browser check)
 
@@ -54,3 +54,5 @@
 - **6.7:** Journal Items does not offer the new filters and still offers Paid.
 - **6.8 (partly checked):** No saved exports or filters use `tax_amount` in `test_ce`. Other databases and the Excel export are unchecked.
 - **Upgrade (5.3):** A fingerprint of debit, credit, balance, subtotal and unit price on all 503 journal lines is identical before and after. No line has an empty signed value.
+
+The notes above are from the read-only browser check. Tasks 6.2, 6.3, 6.4, 6.6, 6.8 and 6.9 were ticked on 2026-11-03 after the project owner reported that testing had passed. No per-task results were recorded for them.
