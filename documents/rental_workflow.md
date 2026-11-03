@@ -76,6 +76,19 @@ sequenceDiagram
 
 **Partial Returns:** If a customer returns only a subset of their rented items initially, a proportional credit note is generated based on the quantity returned. Additional credit notes are generated for downstream partial returns until the full deposit is refunded.
 
+### Checking Reverse Invoices in Reporting > By Item
+
+The By Item report lists the product lines of customer invoices and credit notes (RINV), so accounting can check the reverse invoice for an order.
+
+- **Negative amounts:** Subtotal and Tax are negative on credit note lines, so totals are net. Unit Price and Quantity stay positive, as printed on the document.
+- **Totals in a long list:** The total at the bottom of the ungrouped list covers only the rows on the current page, or the selected rows. Check the row counter at the top right. When the list runs over more than one page, group the lines to get a total for each group.
+- **Grouped rows:** Rely on Subtotal and Tax in a group row. Quantity and Unit Price in a group row are plain sums that ignore credit notes, so they are not meaningful.
+- **Order:** Shows the sale order on each line. Group by Order to see an invoice next to its reversal.
+- **Reversal Of:** Shows the original invoice on a credit note.
+- **Posted by default:** The report opens on posted documents. Remove the Posted filter to see draft and cancelled documents, which then count towards the totals.
+- **Filters:** Use Invoices, Credit Notes and Reversed to narrow the list. An unpaid invoice that has been fully credited has the status `Reversed`.
+- **Held deposits:** A deposit held on a card and later released or forfeited has no credit note, so no RINV line appears for it. This is expected.
+
 ---
 
 ## Return & Inspection Routing
